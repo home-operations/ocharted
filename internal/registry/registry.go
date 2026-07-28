@@ -51,6 +51,10 @@ func New(cfg *config.Config, res *Resolver, log *slog.Logger) *Server {
 	return &Server{cfg: cfg, res: res, log: log}
 }
 
+// Handler returns the public HTTP handler (the /v2/ API plus probes) — the
+// same one Run serves, exposed for tests that mount it on their own listener.
+func (s *Server) Handler() http.Handler { return s.handler() }
+
 // Run starts every enabled listener and blocks until ctx is cancelled or a
 // listener fails, then drains them within the configured shutdown timeout.
 func (s *Server) Run(ctx context.Context) error {

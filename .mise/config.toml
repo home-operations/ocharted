@@ -27,6 +27,10 @@ run = "go vet ./..."
 description = "Run tests with coverage"
 run = "go test -race $(go list ./...) -coverprofile cover.out"
 
+[tasks.test-e2e]
+description = "E2E: pull and cosign-verify a real chart through the proxy with the helm/cosign CLIs (needs network)"
+run = "go test -tags e2e -count=1 -timeout 10m -v ./test/e2e/"
+
 [tasks.lint]
 description = "Run golangci-lint"
 run = "golangci-lint run"
