@@ -221,6 +221,41 @@ curation and no onboarding, but also no rehosting — it is a translator, not an
 archive, and inherits upstream availability and mutability. Use charts-mirror
 for charts that need durability and signing; use ocify for the long tail.
 
+## Prior art
+
+ocify was inspired by
+[helm-charts-oci-proxy](https://github.com/container-registry/helm-charts-oci-proxy),
+which pioneered the idea of transparently serving Chart Repository styled Helm
+repos as OCI artifacts and proved the URL scheme this project uses. ocify is a
+from-scratch take on the same idea, built for GitOps/homelab deployments.
+What it adds:
+
+- **Deterministic derivation as a hard invariant** — manifests, config blobs,
+  and digests are byte-identical across replicas and restarts (no clocks, no
+  randomness, config blob sourced from inside the tarball). That is what makes
+  digest pinning and coordination-free multi-replica HA safe.
+- **Cosign signing** of served artifacts (deterministic Ed25519), so Flux
+  `verify.provider: cosign` can enforce that charts only enter the cluster
+  through your proxy.
+- **Helm `.prov` provenance passthrough**, carrying the upstream maintainer's
+  PGP signature through as the standard provenance layer.
+- **Basic auth** for the whole `/v2/` API — the standard registry credential
+  flow Flux (`dockerconfigjson`) and Renovate (`hostRules`) already speak.
+- **An SSRF boundary**: upstream host allowlist plus an always-on
+  private-address dial guard that rejects at connect time, post-DNS.
+- **Upstream digest verification** — tarballs are checked against the digest
+  the index publishes before anything is served.
+- **Operational plumbing**: Prometheus metrics, liveness/readiness probes,
+  structured logs, graceful drain, response size caps, spec-compliant
+  `tags/list` pagination, and `Cache-Control` headers that make by-digest
+  responses edge-cacheable.
+- **A documented Renovate story** for every deployment topology.
+
+In the other direction, helm-charts-oci-proxy offers dependency URL rewriting
+(pointing a chart's `Chart.yaml` dependencies back through the proxy) and a
+free hosted instance. ocify deliberately never rewrites chart contents — the
+tarball is served byte-for-byte so its digest matches what upstream published.
+
 ## Non-goals
 
 - **Git-sourced charts** — packaging from a git checkout is not
