@@ -21,7 +21,4 @@ run = "mise run generate && git add charts/ocharted/README.md charts/ocharted/va
 exclude = ["charts/ocharted/README.md"]
 
 [pre-commit.commands.format-json]
-exclude = [
-  "charts/ocharted/values.schema.json",
-  ".release-please-manifest.json",
-]
+exclude = ["charts/ocharted/values.schema.json"]
