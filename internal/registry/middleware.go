@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"crypto/subtle"
 	"log/slog"
 	"net"
@@ -54,19 +55,41 @@ func (s *Server) basicAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if len(s.cfg.AuthBypassNets) > 0 && chainWithin(r, s.cfg.AuthBypassNets) {
 			authBypassed.Inc()
+			setAuthOutcome(r, "bypassed", "")
 			next.ServeHTTP(w, r)
 			return
 		}
 		user, pass, ok := r.BasicAuth()
 		want, known := s.cfg.Users[user]
 		if !ok || !known || subtle.ConstantTimeCompare([]byte(pass), []byte(want)) != 1 {
+			setAuthOutcome(r, "denied", "")
 			w.Header().Set("WWW-Authenticate", `Basic realm="ocharted"`)
 			w.Header().Set("Docker-Distribution-API-Version", "registry/2.0")
 			writeOCIError(w, http.StatusUnauthorized, "UNAUTHORIZED", "authentication required")
 			return
 		}
+		setAuthOutcome(r, "authenticated", user)
 		next.ServeHTTP(w, r)
 	})
+}
+
+// authOutcome carries how the auth middleware disposed of a request out to
+// the access log. observe seeds an empty holder into the request context;
+// basicAuth (which runs deeper in the chain, on a derived request) fills the
+// shared holder, which is why this is a mutable pointer rather than a plain
+// context value.
+type authOutcome struct {
+	outcome string // "" (auth disabled / non-registry route), bypassed, authenticated, denied
+	user    string // set when authenticated
+}
+
+type authOutcomeKey struct{}
+
+func setAuthOutcome(r *http.Request, outcome, user string) {
+	if ao, ok := r.Context().Value(authOutcomeKey{}).(*authOutcome); ok {
+		ao.outcome = outcome
+		ao.user = user
+	}
 }
 
 // chainWithin reports whether the request's entire connection chain — the TCP
@@ -140,6 +163,8 @@ func (s *Server) observe(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+		auth := &authOutcome{}
+		r = r.WithContext(context.WithValue(r.Context(), authOutcomeKey{}, auth))
 
 		// Record in a defer so a panic recovered by the inner recoverer (which
 		// writes 500 to rec) is still counted and access-logged, with its status.
@@ -148,7 +173,7 @@ func (s *Server) observe(next http.Handler) http.Handler {
 			method := methodLabel(r.Method)
 			httpRequests.WithLabelValues(method, statusClass(rec.status)).Inc()
 			httpDuration.WithLabelValues(method).Observe(duration.Seconds())
-			s.logRequest(r, rec.status, duration)
+			s.logRequest(r, rec.status, duration, auth)
 		}()
 
 		next.ServeHTTP(rec, r)
@@ -163,7 +188,9 @@ func (s *Server) accessLog(next http.Handler) http.Handler {
 		start := time.Now()
 		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(rec, r)
-		s.logRequest(r, rec.status, time.Since(start))
+		// The metrics listener has no auth middleware, so there is no outcome
+		// to attribute.
+		s.logRequest(r, rec.status, time.Since(start), nil)
 	})
 }
 
@@ -177,7 +204,7 @@ var monitoringPaths = map[string]struct{}{
 // logRequest emits the access log for one request at the path-appropriate
 // level (Debug for the monitoring endpoints, Info otherwise), unless request
 // logs are disabled entirely.
-func (s *Server) logRequest(r *http.Request, status int, d time.Duration) {
+func (s *Server) logRequest(r *http.Request, status int, d time.Duration, auth *authOutcome) {
 	if s.cfg.DisableRequestLogs {
 		return
 	}
@@ -185,11 +212,39 @@ func (s *Server) logRequest(r *http.Request, status int, d time.Duration) {
 	if _, ok := monitoringPaths[r.URL.Path]; ok {
 		level = slog.LevelDebug
 	}
-	s.log.Log(r.Context(), level, "request",
-		"method", r.Method,
+	args := []any{
+		labelMethod, r.Method,
 		"path", r.URL.Path,
 		"status", status,
 		"remote", r.RemoteAddr,
 		"duration", d.String(),
-	)
+	}
+	// Behind a gateway the TCP peer is always the gateway pod, so the XFF
+	// chain is the only attribution for external clients. Logged raw and
+	// unvalidated: the log records what was claimed; chainWithin decides what
+	// is trusted. Omitted for direct connections, keeping those lines as
+	// before.
+	if chain := xffChain(r); len(chain) > 0 {
+		args = append(args, "xff", chain)
+	}
+	if auth != nil && auth.outcome != "" {
+		args = append(args, "auth", auth.outcome)
+		if auth.user != "" {
+			args = append(args, "user", auth.user)
+		}
+	}
+	s.log.Log(r.Context(), level, "request", args...)
+}
+
+// xffChain returns every X-Forwarded-For entry, trimmed, in header order.
+func xffChain(r *http.Request) []string {
+	var chain []string
+	for _, xff := range r.Header.Values("X-Forwarded-For") {
+		for entry := range strings.SplitSeq(xff, ",") {
+			if entry = strings.TrimSpace(entry); entry != "" {
+				chain = append(chain, entry)
+			}
+		}
+	}
+	return chain
 }

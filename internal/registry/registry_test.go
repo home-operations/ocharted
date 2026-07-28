@@ -133,6 +133,71 @@ func (f *fixture) newProxy(t *testing.T) *httptest.Server {
 	return proxy
 }
 
+// TestAccessLogClientChain asserts the access log carries the attribution
+// evidence issue #9 asked for: the raw X-Forwarded-For chain (omitted for
+// direct connections) and the auth outcome (denied/bypassed/authenticated,
+// with the user when authenticated).
+func TestAccessLogClientChain(t *testing.T) {
+	f := newFixture(t, func(cfg *config.Config) {
+		cfg.Users = map[string]string{"flux": "hunter2"}
+		cfg.AuthBypassNets = []netip.Prefix{netip.MustParsePrefix("10.42.0.0/16")}
+	})
+	var logBuf bytes.Buffer
+	up := upstream.New(upstream.Options{
+		Timeout: 5 * time.Second, IndexTTL: f.cfg.IndexTTL,
+		MaxIndexBytes: f.cfg.MaxIndexBytes, MaxChartBytes: f.cfg.MaxChartBytes,
+		AllowPrivate: true, UserAgent: "ocharted-test",
+		Transport: f.upSrv.Client().Transport,
+	})
+	res := NewResolver(up, ResolverOptions{ScanLimit: f.cfg.ResolveScanLimit, CacheBytes: f.cfg.CacheMaxBytes})
+	handler := New(f.cfg, res, slog.New(slog.NewJSONHandler(&logBuf, nil))).Handler()
+
+	lastLog := func() map[string]any {
+		t.Helper()
+		lines := strings.Split(strings.TrimSpace(logBuf.String()), "\n")
+		var entry map[string]any
+		if err := json.Unmarshal([]byte(lines[len(lines)-1]), &entry); err != nil {
+			t.Fatalf("parse log line %q: %v", lines[len(lines)-1], err)
+		}
+		return entry
+	}
+
+	// External client behind the gateway, no credentials: denied, chain logged.
+	req := httptest.NewRequest(http.MethodGet, "/v2/", nil)
+	req.RemoteAddr = "10.42.1.171:51212"
+	req.Header.Set("X-Forwarded-For", "203.0.113.7, 10.42.0.1")
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+	entry := lastLog()
+	if entry["auth"] != "denied" {
+		t.Fatalf("auth = %v, want denied", entry["auth"])
+	}
+	if xff, _ := entry["xff"].([]any); len(xff) != 2 || xff[0] != "203.0.113.7" {
+		t.Fatalf("xff = %v, want [203.0.113.7 10.42.0.1]", entry["xff"])
+	}
+
+	// In-cluster hairpin: bypassed.
+	req = httptest.NewRequest(http.MethodGet, "/v2/", nil)
+	req.RemoteAddr = "10.42.1.171:51212"
+	req.Header.Set("X-Forwarded-For", "10.42.0.7")
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+	if entry = lastLog(); entry["auth"] != "bypassed" {
+		t.Fatalf("auth = %v, want bypassed", entry["auth"])
+	}
+
+	// Authenticated external client, direct connection: user logged, no xff key.
+	req = httptest.NewRequest(http.MethodGet, "/v2/", nil)
+	req.RemoteAddr = "203.0.113.7:52000"
+	req.SetBasicAuth("flux", "hunter2")
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+	entry = lastLog()
+	if entry["auth"] != "authenticated" || entry["user"] != "flux" {
+		t.Fatalf("auth/user = %v/%v, want authenticated/flux", entry["auth"], entry["user"])
+	}
+	if _, present := entry["xff"]; present {
+		t.Fatal("xff must be omitted for direct connections")
+	}
+}
+
 // TestAuthBypassNetworks exercises the trusted-network bypass with crafted
 // peers and X-Forwarded-For chains — a request is anonymous iff every hop
 // lies within the bypass networks; anything else (or with valid credentials)
