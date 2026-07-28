@@ -1,0 +1,82 @@
+[tools]
+actionlint = "1.7.12"
+go = "1.26.5"
+golangci-lint = "2.12.2"
+helm = "4.2.3"
+cosign = "3.1.2"
+"aqua:dadav/helm-schema" = "0.23.4"
+lefthook = "2.1.10"
+oxfmt = "0.60.0"
+zizmor = "1.28.0"
+helm-docs = "1.14.2"
+yq = "4.53.3"
+
+[tasks.build]
+description = "Build the ocify binary"
+run = "go build ./..."
+
+[tasks.fmt]
+description = "Run go fmt against code"
+run = "go fmt ./..."
+
+[tasks.vet]
+description = "Run go vet against code"
+run = "go vet ./..."
+
+[tasks.test]
+description = "Run tests with coverage"
+run = "go test -race $(go list ./...) -coverprofile cover.out"
+
+[tasks.lint]
+description = "Run golangci-lint"
+run = "golangci-lint run"
+
+[tasks.lint-fix]
+description = "Run golangci-lint with --fix"
+run = "golangci-lint run --fix"
+
+[tasks.generate]
+description = "Regenerate committed generated files (chart README, values schema)"
+run = """
+helm-docs --chart-search-root=charts --log-level=warn
+# values.schema.json from values.yaml. required/additionalProperties are skipped:
+# values.yaml provides every default (so nothing is user-required), and the free-form
+# maps (annotations, env, …) must stay open. --append-newline gives a clean EOF.
+helm-schema --chart-search-root charts/ocify --skip-auto-generation required,additionalProperties --append-newline
+"""
+
+[tasks.generate-check]
+description = "Fail if the committed generated files are stale (CI gate)"
+run = """
+mise run generate
+git diff --exit-code charts/ocify/README.md charts/ocify/values.schema.json
+"""
+
+[tasks.helm-lint]
+description = "Lint the Helm chart"
+run = "helm lint charts/ocify"
+
+[tasks.helm-unittest]
+description = "Run helm-unittest template tests (needs the helm-unittest plugin)"
+run = "helm unittest charts/ocify"
+
+[tasks.helm-template]
+description = "Render the Helm chart with default values"
+run = "helm template ocify charts/ocify"
+
+[tasks.helm-test]
+description = "Install the chart into the current cluster (e.g. a kind context) and run `helm test`"
+# The e2e workflow builds the PR's image, kind-loads it, and sets
+# OCIFY_TEST_IMAGE_TAG=e2e + pull policy Never so the test runs the code under
+# review; locally these default to the published `latest` for a quick chart
+# check. Export KUBECONFIG to the kind context first.
+run = """
+set -e
+helm upgrade --install ocify-e2e charts/ocify -n ocify-e2e --create-namespace --wait --timeout 5m \
+  --set image.tag="${OCIFY_TEST_IMAGE_TAG:-latest}" \
+  --set image.pullPolicy="${OCIFY_TEST_PULL_POLICY:-IfNotPresent}"
+helm test ocify-e2e -n ocify-e2e --logs
+"""
+
+[hooks]
+postinstall = "lefthook install"

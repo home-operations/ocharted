@@ -1,0 +1,38 @@
+ocify {{ .Chart.AppVersion }} is deployed as {{ include "ocify.fullname" . }} in namespace {{ .Release.Namespace }}.
+
+Any chart in any HTTP Helm repository is now pullable as:
+
+  oci://{{ include "ocify.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/<upstream-host[/path]>/<chart>
+
+{{- if and (not .Values.auth.users) (not .Values.auth.existingSecret) }}
+
+ℹ  The registry is anonymous (no `auth.users` / `auth.existingSecret`) — fine for
+   cluster-internal use. Set one before exposing it outside the cluster.
+{{- end }}
+{{- if not .Values.config.upstreamAllowlist }}
+
+ℹ  No `config.upstreamAllowlist` — any public upstream host may be proxied. Set
+   one on any deployment reachable by untrusted clients (it is an SSRF boundary,
+   not just an abuse guard).
+{{- end }}
+
+Point a Flux OCIRepository at it (replace host/chart/version):
+
+  apiVersion: source.toolkit.fluxcd.io/v1
+  kind: OCIRepository
+  spec:
+    interval: 1h
+    layerSelector:
+      mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+      operation: copy
+    ref:
+      tag: v1.18.2
+    url: oci://{{ include "ocify.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/charts.jetstack.io/cert-manager
+{{- if or .Values.auth.users .Values.auth.existingSecret }}
+    secretRef:
+      name: <dockerconfigjson secret for this registry>
+{{- end }}
+
+Or pull from inside the cluster:
+
+  helm pull oci://{{ include "ocify.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/charts.jetstack.io/cert-manager --version v1.18.2 --plain-http

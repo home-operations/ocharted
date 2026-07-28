@@ -1,0 +1,230 @@
+# Default values for ocify.
+#
+# ocify is a stateless OCI registry proxy for classic Helm repositories: every
+# response is derived on demand from the upstream repo, so there is no volume,
+# no database, and replicas need no coordination — `replicaCount` is purely
+# capacity/HA. All settings map to OCIFY_* environment variables; the only
+# secret is the optional basic-auth user list.
+#
+# Most strings, lists, and maps below are rendered through Helm's `tpl`, so you
+# can reference release values (e.g. `{{ .Release.Name }}`) inside them.
+
+image:
+  # -- Image repository.
+  repository: ghcr.io/home-operations/ocify
+  # -- Overrides the image tag; defaults to the chart appVersion.
+  tag: ""
+  # -- Pin the image by digest (sha256:…); set by the release pipeline. When set, it overrides the tag.
+  digest: ""
+  # -- Image pull policy.
+  pullPolicy: IfNotPresent
+
+# -- Image pull secrets for private registries.
+imagePullSecrets: []
+
+# -- Override the chart name used in the `app.kubernetes.io/name` label.
+nameOverride: ""
+# -- Override the generated name used for every resource's `metadata.name` (the chart "fullname").
+fullnameOverride: ""
+
+# -- Number of replicas. ocify is stateless and replicas re-derive identical answers, so >1 is just more capacity/HA — no coordination, no sticky sessions.
+replicaCount: 1
+
+# The proxy's configuration; every field maps to an OCIFY_* env var.
+config:
+  # -- Registry API port (OCIFY_PORT): /v2/, /healthz, /readyz; also the container/Service http port.
+  port: 8080
+  # -- Expose Prometheus metrics at /metrics on metricsPort (OCIFY_METRICS_ENABLED). Disabling removes the metrics listener, container port, Service port, and ServiceMonitor entirely; health probes are unaffected (they target the http port).
+  metricsEnabled: true
+  # -- Metrics listen port (OCIFY_METRICS_PORT), kept off the public registry port.
+  metricsPort: 8081
+  # -- Log level (OCIFY_LOG_LEVEL): debug, info, warn, or error.
+  logLevel: info
+  # -- Log format (OCIFY_LOG_FORMAT): json or text.
+  logFormat: json
+  # -- Upstream index.yaml cache TTL (OCIFY_INDEX_TTL) — how fast new chart versions appear, and how often upstreams are re-fetched.
+  indexTTL: 5m
+  # -- In-memory derived-artifact cache bound in bytes (OCIFY_CACHE_MAX_BYTES). Purely a latency/upstream-traffic optimization; size resources.limits.memory above it with headroom.
+  cacheMaxBytes: 268435456
+  # -- Upstream index.yaml size cap in bytes (OCIFY_MAX_INDEX_BYTES); generous because real indexes get big (Bitnami's is tens of MB).
+  maxIndexBytes: 67108864
+  # -- Upstream chart tarball size cap in bytes (OCIFY_MAX_CHART_BYTES).
+  maxChartBytes: 33554432
+  # -- One upstream HTTP exchange deadline (OCIFY_UPSTREAM_TIMEOUT).
+  upstreamTimeout: 30s
+  # -- Upstream repo hosts that may be proxied, as glob patterns (OCIFY_UPSTREAM_ALLOWLIST), e.g. ["*.github.io", "charts.jetstack.io"]. Empty allows any public host. This is an SSRF boundary as much as an abuse guard — set it on any deployment reachable by untrusted clients.
+  upstreamAllowlist: []
+  # -- Permit upstreams that resolve to private addresses (OCIFY_ALLOW_PRIVATE_UPSTREAMS), e.g. an in-cluster ChartMuseum. Leave off otherwise.
+  allowPrivateUpstreams: false
+  # -- Fetch each chart's .prov file and attach it as the Helm provenance layer when upstream publishes one (OCIFY_PROVENANCE_ENABLED). Adds one upstream request per chart build.
+  provenanceEnabled: false
+  # -- Max candidate versions a cold by-digest lookup derives before giving up (OCIFY_RESOLVE_SCAN_LIMIT).
+  resolveScanLimit: 25
+  # -- Silence the per-request access log (OCIFY_DISABLE_REQUEST_LOGS).
+  disableRequestLogs: false
+  # -- Graceful drain bound on SIGTERM (OCIFY_SHUTDOWN_TIMEOUT).
+  shutdownTimeout: 15s
+
+# Registry authentication, delivered as OCIFY_AUTH from a Secret. When neither
+# field is set the registry is anonymous — fine for cluster-internal
+# deployments; set one for anything exposed.
+auth:
+  # -- Basic-auth users as a `user:password,user2:password2` list (OCIFY_AUTH). If set, it is rendered into a chart-managed Secret. Leave empty and use `existingSecret` to supply it from your own (e.g. SOPS/sealed) Secret.
+  users: ""
+  # -- Use this existing Secret for OCIFY_AUTH instead of rendering one.
+  existingSecret: ""
+  # -- Key in `existingSecret` holding the `user:password,…` list.
+  existingSecretKey: auth
+
+# Cosign signing of served artifacts. When enabled, every manifest gets a
+# signature under cosign's sha256-<digest>.sig tag convention, which Flux
+# enforces via `verify.provider: cosign`. The signature attests the path
+# (these bytes came through this ocify), not upstream authorship.
+signing:
+  # -- Existing Secret holding a PEM-encoded Ed25519 private key (PKCS#8, e.g. `openssl genpkey -algorithm ed25519`). Ed25519 only — its deterministic signatures are what keep replicas stateless. Empty disables signing. The chart never manages this Secret: private key material belongs in your own (e.g. SOPS/sealed) Secret.
+  existingSecret: ""
+  # -- Key in `existingSecret` holding the private key PEM.
+  existingSecretKey: signing.key
+
+# -- Extra environment variables as a map (templated).
+env: {}
+# -- Extra environment variables as a raw list (templated), e.g. valueFrom a Secret key.
+extraEnv: []
+# -- Sources of environment variables (templated), e.g. `- secretRef: { name: ocify-auth }`.
+envFrom: []
+
+# -- Deployment update strategy. RollingUpdate by default; ocify is stateless so a surge-then-drain rollout is safe.
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+
+serviceAccount:
+  # -- Create a ServiceAccount.
+  create: true
+  # -- ServiceAccount name; empty uses the chart fullname.
+  name: ""
+  # -- Mount the API token. ocify never calls the Kubernetes API, so this is off by default.
+  automount: false
+  # -- ServiceAccount annotations.
+  annotations: {}
+
+# -- Pod-level securityContext. ocify runs as the image's nonroot user (uid 65532); no host or elevated access is needed.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container securityContext. Drops all capabilities, read-only root filesystem, no privilege escalation.
+securityContext:
+  privileged: false
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# -- Startup probe (GET /healthz on the main http port, so it works regardless of the metrics toggle).
+startupProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  failureThreshold: 30
+  periodSeconds: 2
+# -- Liveness probe. Targets /healthz on the main http port.
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  periodSeconds: 20
+# -- Readiness probe. Targets /readyz on the main http port.
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: http
+  periodSeconds: 10
+
+# -- Container resource requests/limits. If you set a memory limit, keep it comfortably above `config.cacheMaxBytes`.
+resources: {}
+#   limits:
+#     memory: 512Mi
+#   requests:
+#     cpu: 10m
+#     memory: 64Mi
+
+service:
+  # -- Service type.
+  type: ClusterIP
+  # -- Registry (http) service port.
+  port: 8080
+  # -- Service annotations.
+  annotations: {}
+  # -- externalTrafficPolicy (only applied when type is not ClusterIP).
+  externalTrafficPolicy: ""
+
+monitoring:
+  serviceMonitor:
+    # -- Create a Prometheus Operator ServiceMonitor (requires its CRDs and `config.metricsEnabled`).
+    enabled: false
+    # -- Scrape interval.
+    interval: 30s
+    # -- Scrape timeout.
+    scrapeTimeout: 10s
+    # -- Metrics path.
+    path: /metrics
+    # -- ServiceMonitor labels.
+    labels: {}
+    # -- ServiceMonitor annotations.
+    annotations: {}
+    # -- Prometheus metric relabelings.
+    metricRelabelings: []
+    # -- Prometheus relabelings.
+    relabelings: []
+
+podDisruptionBudget:
+  # -- Create a PodDisruptionBudget (meaningful only with replicaCount > 1).
+  enabled: false
+  # -- minAvailable (mutually exclusive with maxUnavailable).
+  minAvailable: 1
+  # -- maxUnavailable.
+  maxUnavailable: ""
+
+# -- Annotations added to the Deployment metadata, e.g. `reloader.stakater.com/auto: "true"` to roll the pod when a referenced Secret changes (recommended when using `auth.existingSecret`).
+deploymentAnnotations: {}
+# -- Annotations added to the pod. A `checksum/secret` annotation is added automatically when the chart manages the auth Secret, so credential edits roll the pod.
+podAnnotations: {}
+# -- Labels added to the pod.
+podLabels: {}
+
+# -- Additional volumes on the pod (templated).
+volumes: []
+# -- Additional volume mounts on the container (templated).
+volumeMounts: []
+# -- Additional init containers (templated).
+initContainers: []
+
+# -- Node selector for pod scheduling (templated).
+nodeSelector: {}
+# -- Tolerations for pod scheduling (templated).
+tolerations: []
+# -- Affinity rules for pod scheduling (templated).
+affinity: {}
+# -- Topology spread constraints (templated).
+topologySpreadConstraints: []
+# -- PriorityClass for the pod (templated); empty uses the cluster default.
+priorityClassName: ""
+# -- Grace period for a clean shutdown (drain).
+terminationGracePeriodSeconds: 30
+
+tests:
+  image:
+    # -- `helm test` connection-pod image; a gcr-mirrored curl, so the test never pulls from Docker Hub.
+    repository: mirror.gcr.io/curlimages/curl
+    # -- `helm test` image, pinned as `tag@sha256:digest` so Renovate bumps the tag and its digest together.
+    tag: "8.21.0@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13"
+    # -- `helm test` image pull policy.
+    pullPolicy: IfNotPresent

@@ -1,0 +1,724 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "affinity": {
+      "description": "Affinity rules for pod scheduling (templated).",
+      "required": [],
+      "title": "affinity",
+      "type": "object"
+    },
+    "auth": {
+      "description": "Registry authentication, delivered as OCIFY_AUTH from a Secret. When neither\nfield is set the registry is anonymous — fine for cluster-internal\ndeployments; set one for anything exposed.",
+      "properties": {
+        "existingSecret": {
+          "default": "",
+          "description": "Use this existing Secret for OCIFY_AUTH instead of rendering one.",
+          "title": "existingSecret",
+          "type": "string"
+        },
+        "existingSecretKey": {
+          "default": "auth",
+          "description": "Key in `existingSecret` holding the `user:password,…` list.",
+          "title": "existingSecretKey",
+          "type": "string"
+        },
+        "users": {
+          "default": "",
+          "description": "Basic-auth users as a `user:password,user2:password2` list (OCIFY_AUTH). If set, it is rendered into a chart-managed Secret. Leave empty and use `existingSecret` to supply it from your own (e.g. SOPS/sealed) Secret.",
+          "title": "users",
+          "type": "string"
+        }
+      },
+      "required": [],
+      "title": "auth",
+      "type": "object"
+    },
+    "config": {
+      "description": "The proxy's configuration; every field maps to an OCIFY_* env var.",
+      "properties": {
+        "allowPrivateUpstreams": {
+          "default": false,
+          "description": "Permit upstreams that resolve to private addresses (OCIFY_ALLOW_PRIVATE_UPSTREAMS), e.g. an in-cluster ChartMuseum. Leave off otherwise.",
+          "title": "allowPrivateUpstreams",
+          "type": "boolean"
+        },
+        "cacheMaxBytes": {
+          "default": 268435456,
+          "description": "In-memory derived-artifact cache bound in bytes (OCIFY_CACHE_MAX_BYTES). Purely a latency/upstream-traffic optimization; size resources.limits.memory above it with headroom.",
+          "title": "cacheMaxBytes",
+          "type": "integer"
+        },
+        "disableRequestLogs": {
+          "default": false,
+          "description": "Silence the per-request access log (OCIFY_DISABLE_REQUEST_LOGS).",
+          "title": "disableRequestLogs",
+          "type": "boolean"
+        },
+        "indexTTL": {
+          "default": "5m",
+          "description": "Upstream index.yaml cache TTL (OCIFY_INDEX_TTL) — how fast new chart versions appear, and how often upstreams are re-fetched.",
+          "title": "indexTTL",
+          "type": "string"
+        },
+        "logFormat": {
+          "default": "json",
+          "description": "Log format (OCIFY_LOG_FORMAT): json or text.",
+          "title": "logFormat",
+          "type": "string"
+        },
+        "logLevel": {
+          "default": "info",
+          "description": "Log level (OCIFY_LOG_LEVEL): debug, info, warn, or error.",
+          "title": "logLevel",
+          "type": "string"
+        },
+        "maxChartBytes": {
+          "default": 33554432,
+          "description": "Upstream chart tarball size cap in bytes (OCIFY_MAX_CHART_BYTES).",
+          "title": "maxChartBytes",
+          "type": "integer"
+        },
+        "maxIndexBytes": {
+          "default": 67108864,
+          "description": "Upstream index.yaml size cap in bytes (OCIFY_MAX_INDEX_BYTES); generous because real indexes get big (Bitnami's is tens of MB).",
+          "title": "maxIndexBytes",
+          "type": "integer"
+        },
+        "metricsEnabled": {
+          "default": true,
+          "description": "Expose Prometheus metrics at /metrics on metricsPort (OCIFY_METRICS_ENABLED). Disabling removes the metrics listener, container port, Service port, and ServiceMonitor entirely; health probes are unaffected (they target the http port).",
+          "title": "metricsEnabled",
+          "type": "boolean"
+        },
+        "metricsPort": {
+          "default": 8081,
+          "description": "Metrics listen port (OCIFY_METRICS_PORT), kept off the public registry port.",
+          "title": "metricsPort",
+          "type": "integer"
+        },
+        "port": {
+          "default": 8080,
+          "description": "Registry API port (OCIFY_PORT): /v2/, /healthz, /readyz; also the container/Service http port.",
+          "title": "port",
+          "type": "integer"
+        },
+        "provenanceEnabled": {
+          "default": false,
+          "description": "Fetch each chart's .prov file and attach it as the Helm provenance layer when upstream publishes one (OCIFY_PROVENANCE_ENABLED). Adds one upstream request per chart build.",
+          "title": "provenanceEnabled",
+          "type": "boolean"
+        },
+        "resolveScanLimit": {
+          "default": 25,
+          "description": "Max candidate versions a cold by-digest lookup derives before giving up (OCIFY_RESOLVE_SCAN_LIMIT).",
+          "title": "resolveScanLimit",
+          "type": "integer"
+        },
+        "shutdownTimeout": {
+          "default": "15s",
+          "description": "Graceful drain bound on SIGTERM (OCIFY_SHUTDOWN_TIMEOUT).",
+          "title": "shutdownTimeout",
+          "type": "string"
+        },
+        "upstreamAllowlist": {
+          "description": "Upstream repo hosts that may be proxied, as glob patterns (OCIFY_UPSTREAM_ALLOWLIST), e.g. [\"*.github.io\", \"charts.jetstack.io\"]. Empty allows any public host. This is an SSRF boundary as much as an abuse guard — set it on any deployment reachable by untrusted clients.",
+          "items": {
+            "required": []
+          },
+          "title": "upstreamAllowlist",
+          "type": "array"
+        },
+        "upstreamTimeout": {
+          "default": "30s",
+          "description": "One upstream HTTP exchange deadline (OCIFY_UPSTREAM_TIMEOUT).",
+          "title": "upstreamTimeout",
+          "type": "string"
+        }
+      },
+      "required": [],
+      "title": "config",
+      "type": "object"
+    },
+    "deploymentAnnotations": {
+      "description": "Annotations added to the Deployment metadata, e.g. `reloader.stakater.com/auto: \"true\"` to roll the pod when a referenced Secret changes (recommended when using `auth.existingSecret`).",
+      "required": [],
+      "title": "deploymentAnnotations",
+      "type": "object"
+    },
+    "env": {
+      "description": "Extra environment variables as a map (templated).",
+      "required": [],
+      "title": "env",
+      "type": "object"
+    },
+    "envFrom": {
+      "description": "Sources of environment variables (templated), e.g. `- secretRef: { name: ocify-auth }`.",
+      "items": {
+        "required": []
+      },
+      "title": "envFrom",
+      "type": "array"
+    },
+    "extraEnv": {
+      "description": "Extra environment variables as a raw list (templated), e.g. valueFrom a Secret key.",
+      "items": {
+        "required": []
+      },
+      "title": "extraEnv",
+      "type": "array"
+    },
+    "fullnameOverride": {
+      "default": "",
+      "description": "Override the generated name used for every resource's `metadata.name` (the chart \"fullname\").",
+      "title": "fullnameOverride",
+      "type": "string"
+    },
+    "global": {
+      "description": "Global values are values that can be accessed from any chart or subchart by exactly the same name.",
+      "required": [],
+      "title": "global",
+      "type": "object"
+    },
+    "image": {
+      "properties": {
+        "digest": {
+          "default": "",
+          "description": "Pin the image by digest (sha256:…); set by the release pipeline. When set, it overrides the tag.",
+          "title": "digest",
+          "type": "string"
+        },
+        "pullPolicy": {
+          "default": "IfNotPresent",
+          "description": "Image pull policy.",
+          "title": "pullPolicy",
+          "type": "string"
+        },
+        "repository": {
+          "default": "ghcr.io/home-operations/ocify",
+          "description": "Image repository.",
+          "title": "repository",
+          "type": "string"
+        },
+        "tag": {
+          "default": "",
+          "description": "Overrides the image tag; defaults to the chart appVersion.",
+          "title": "tag",
+          "type": "string"
+        }
+      },
+      "required": [],
+      "title": "image",
+      "type": "object"
+    },
+    "imagePullSecrets": {
+      "description": "Image pull secrets for private registries.",
+      "items": {
+        "required": []
+      },
+      "title": "imagePullSecrets",
+      "type": "array"
+    },
+    "initContainers": {
+      "description": "Additional init containers (templated).",
+      "items": {
+        "required": []
+      },
+      "title": "initContainers",
+      "type": "array"
+    },
+    "livenessProbe": {
+      "description": "Liveness probe. Targets /healthz on the main http port.",
+      "properties": {
+        "httpGet": {
+          "properties": {
+            "path": {
+              "default": "/healthz",
+              "title": "path",
+              "type": "string"
+            },
+            "port": {
+              "default": "http",
+              "title": "port",
+              "type": "string"
+            }
+          },
+          "required": [],
+          "title": "httpGet",
+          "type": "object"
+        },
+        "periodSeconds": {
+          "default": 20,
+          "title": "periodSeconds",
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "title": "livenessProbe",
+      "type": "object"
+    },
+    "monitoring": {
+      "properties": {
+        "serviceMonitor": {
+          "properties": {
+            "annotations": {
+              "description": "ServiceMonitor annotations.",
+              "required": [],
+              "title": "annotations",
+              "type": "object"
+            },
+            "enabled": {
+              "default": false,
+              "description": "Create a Prometheus Operator ServiceMonitor (requires its CRDs and `config.metricsEnabled`).",
+              "title": "enabled",
+              "type": "boolean"
+            },
+            "interval": {
+              "default": "30s",
+              "description": "Scrape interval.",
+              "title": "interval",
+              "type": "string"
+            },
+            "labels": {
+              "description": "ServiceMonitor labels.",
+              "required": [],
+              "title": "labels",
+              "type": "object"
+            },
+            "metricRelabelings": {
+              "description": "Prometheus metric relabelings.",
+              "items": {
+                "required": []
+              },
+              "title": "metricRelabelings",
+              "type": "array"
+            },
+            "path": {
+              "default": "/metrics",
+              "description": "Metrics path.",
+              "title": "path",
+              "type": "string"
+            },
+            "relabelings": {
+              "description": "Prometheus relabelings.",
+              "items": {
+                "required": []
+              },
+              "title": "relabelings",
+              "type": "array"
+            },
+            "scrapeTimeout": {
+              "default": "10s",
+              "description": "Scrape timeout.",
+              "title": "scrapeTimeout",
+              "type": "string"
+            }
+          },
+          "required": [],
+          "title": "serviceMonitor",
+          "type": "object"
+        }
+      },
+      "required": [],
+      "title": "monitoring",
+      "type": "object"
+    },
+    "nameOverride": {
+      "default": "",
+      "description": "Override the chart name used in the `app.kubernetes.io/name` label.",
+      "title": "nameOverride",
+      "type": "string"
+    },
+    "nodeSelector": {
+      "description": "Node selector for pod scheduling (templated).",
+      "required": [],
+      "title": "nodeSelector",
+      "type": "object"
+    },
+    "podAnnotations": {
+      "description": "Annotations added to the pod. A `checksum/secret` annotation is added automatically when the chart manages the auth Secret, so credential edits roll the pod.",
+      "required": [],
+      "title": "podAnnotations",
+      "type": "object"
+    },
+    "podDisruptionBudget": {
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "Create a PodDisruptionBudget (meaningful only with replicaCount \u003e 1).",
+          "title": "enabled",
+          "type": "boolean"
+        },
+        "maxUnavailable": {
+          "default": "",
+          "description": "maxUnavailable.",
+          "title": "maxUnavailable",
+          "type": "string"
+        },
+        "minAvailable": {
+          "default": 1,
+          "description": "minAvailable (mutually exclusive with maxUnavailable).",
+          "title": "minAvailable",
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "title": "podDisruptionBudget",
+      "type": "object"
+    },
+    "podLabels": {
+      "description": "Labels added to the pod.",
+      "required": [],
+      "title": "podLabels",
+      "type": "object"
+    },
+    "podSecurityContext": {
+      "description": "Pod-level securityContext. ocify runs as the image's nonroot user (uid 65532); no host or elevated access is needed.",
+      "properties": {
+        "fsGroup": {
+          "default": 65532,
+          "title": "fsGroup",
+          "type": "integer"
+        },
+        "runAsGroup": {
+          "default": 65532,
+          "title": "runAsGroup",
+          "type": "integer"
+        },
+        "runAsNonRoot": {
+          "default": true,
+          "title": "runAsNonRoot",
+          "type": "boolean"
+        },
+        "runAsUser": {
+          "default": 65532,
+          "title": "runAsUser",
+          "type": "integer"
+        },
+        "seccompProfile": {
+          "properties": {
+            "type": {
+              "default": "RuntimeDefault",
+              "title": "type",
+              "type": "string"
+            }
+          },
+          "required": [],
+          "title": "seccompProfile",
+          "type": "object"
+        }
+      },
+      "required": [],
+      "title": "podSecurityContext",
+      "type": "object"
+    },
+    "priorityClassName": {
+      "default": "",
+      "description": "PriorityClass for the pod (templated); empty uses the cluster default.",
+      "title": "priorityClassName",
+      "type": "string"
+    },
+    "readinessProbe": {
+      "description": "Readiness probe. Targets /readyz on the main http port.",
+      "properties": {
+        "httpGet": {
+          "properties": {
+            "path": {
+              "default": "/readyz",
+              "title": "path",
+              "type": "string"
+            },
+            "port": {
+              "default": "http",
+              "title": "port",
+              "type": "string"
+            }
+          },
+          "required": [],
+          "title": "httpGet",
+          "type": "object"
+        },
+        "periodSeconds": {
+          "default": 10,
+          "title": "periodSeconds",
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "title": "readinessProbe",
+      "type": "object"
+    },
+    "replicaCount": {
+      "default": 1,
+      "description": "Number of replicas. ocify is stateless and replicas re-derive identical answers, so \u003e1 is just more capacity/HA — no coordination, no sticky sessions.",
+      "title": "replicaCount",
+      "type": "integer"
+    },
+    "resources": {
+      "description": "Container resource requests/limits. If you set a memory limit, keep it comfortably above `config.cacheMaxBytes`.",
+      "required": [],
+      "title": "resources",
+      "type": "object"
+    },
+    "securityContext": {
+      "description": "Container securityContext. Drops all capabilities, read-only root filesystem, no privilege escalation.",
+      "properties": {
+        "allowPrivilegeEscalation": {
+          "default": false,
+          "title": "allowPrivilegeEscalation",
+          "type": "boolean"
+        },
+        "capabilities": {
+          "properties": {
+            "drop": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  }
+                ],
+                "required": []
+              },
+              "title": "drop",
+              "type": "array"
+            }
+          },
+          "required": [],
+          "title": "capabilities",
+          "type": "object"
+        },
+        "privileged": {
+          "default": false,
+          "title": "privileged",
+          "type": "boolean"
+        },
+        "readOnlyRootFilesystem": {
+          "default": true,
+          "title": "readOnlyRootFilesystem",
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "title": "securityContext",
+      "type": "object"
+    },
+    "service": {
+      "properties": {
+        "annotations": {
+          "description": "Service annotations.",
+          "required": [],
+          "title": "annotations",
+          "type": "object"
+        },
+        "externalTrafficPolicy": {
+          "default": "",
+          "description": "externalTrafficPolicy (only applied when type is not ClusterIP).",
+          "title": "externalTrafficPolicy",
+          "type": "string"
+        },
+        "port": {
+          "default": 8080,
+          "description": "Registry (http) service port.",
+          "title": "port",
+          "type": "integer"
+        },
+        "type": {
+          "default": "ClusterIP",
+          "description": "Service type.",
+          "title": "type",
+          "type": "string"
+        }
+      },
+      "required": [],
+      "title": "service",
+      "type": "object"
+    },
+    "serviceAccount": {
+      "properties": {
+        "annotations": {
+          "description": "ServiceAccount annotations.",
+          "required": [],
+          "title": "annotations",
+          "type": "object"
+        },
+        "automount": {
+          "default": false,
+          "description": "Mount the API token. ocify never calls the Kubernetes API, so this is off by default.",
+          "title": "automount",
+          "type": "boolean"
+        },
+        "create": {
+          "default": true,
+          "description": "Create a ServiceAccount.",
+          "title": "create",
+          "type": "boolean"
+        },
+        "name": {
+          "default": "",
+          "description": "ServiceAccount name; empty uses the chart fullname.",
+          "title": "name",
+          "type": "string"
+        }
+      },
+      "required": [],
+      "title": "serviceAccount",
+      "type": "object"
+    },
+    "signing": {
+      "description": "Cosign signing of served artifacts. When enabled, every manifest gets a\nsignature under cosign's sha256-\u003cdigest\u003e.sig tag convention, which Flux\nenforces via `verify.provider: cosign`. The signature attests the path\n(these bytes came through this ocify), not upstream authorship.",
+      "properties": {
+        "existingSecret": {
+          "default": "",
+          "description": "Existing Secret holding a PEM-encoded Ed25519 private key (PKCS#8, e.g. `openssl genpkey -algorithm ed25519`). Ed25519 only — its deterministic signatures are what keep replicas stateless. Empty disables signing. The chart never manages this Secret: private key material belongs in your own (e.g. SOPS/sealed) Secret.",
+          "title": "existingSecret",
+          "type": "string"
+        },
+        "existingSecretKey": {
+          "default": "signing.key",
+          "description": "Key in `existingSecret` holding the private key PEM.",
+          "title": "existingSecretKey",
+          "type": "string"
+        }
+      },
+      "required": [],
+      "title": "signing",
+      "type": "object"
+    },
+    "startupProbe": {
+      "description": "Startup probe (GET /healthz on the main http port, so it works regardless of the metrics toggle).",
+      "properties": {
+        "failureThreshold": {
+          "default": 30,
+          "title": "failureThreshold",
+          "type": "integer"
+        },
+        "httpGet": {
+          "properties": {
+            "path": {
+              "default": "/healthz",
+              "title": "path",
+              "type": "string"
+            },
+            "port": {
+              "default": "http",
+              "title": "port",
+              "type": "string"
+            }
+          },
+          "required": [],
+          "title": "httpGet",
+          "type": "object"
+        },
+        "periodSeconds": {
+          "default": 2,
+          "title": "periodSeconds",
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "title": "startupProbe",
+      "type": "object"
+    },
+    "strategy": {
+      "description": "Deployment update strategy. RollingUpdate by default; ocify is stateless so a surge-then-drain rollout is safe.",
+      "properties": {
+        "rollingUpdate": {
+          "properties": {
+            "maxSurge": {
+              "default": 1,
+              "title": "maxSurge",
+              "type": "integer"
+            },
+            "maxUnavailable": {
+              "default": 0,
+              "title": "maxUnavailable",
+              "type": "integer"
+            }
+          },
+          "required": [],
+          "title": "rollingUpdate",
+          "type": "object"
+        },
+        "type": {
+          "default": "RollingUpdate",
+          "title": "type",
+          "type": "string"
+        }
+      },
+      "required": [],
+      "title": "strategy",
+      "type": "object"
+    },
+    "terminationGracePeriodSeconds": {
+      "default": 30,
+      "description": "Grace period for a clean shutdown (drain).",
+      "title": "terminationGracePeriodSeconds",
+      "type": "integer"
+    },
+    "tests": {
+      "properties": {
+        "image": {
+          "properties": {
+            "pullPolicy": {
+              "default": "IfNotPresent",
+              "description": "`helm test` image pull policy.",
+              "title": "pullPolicy",
+              "type": "string"
+            },
+            "repository": {
+              "default": "mirror.gcr.io/curlimages/curl",
+              "description": "`helm test` connection-pod image; a gcr-mirrored curl, so the test never pulls from Docker Hub.",
+              "title": "repository",
+              "type": "string"
+            },
+            "tag": {
+              "default": "8.21.0@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13",
+              "description": "`helm test` image, pinned as `tag",
+              "title": "tag",
+              "type": "string"
+            }
+          },
+          "required": [],
+          "title": "image",
+          "type": "object"
+        }
+      },
+      "required": [],
+      "title": "tests",
+      "type": "object"
+    },
+    "tolerations": {
+      "description": "Tolerations for pod scheduling (templated).",
+      "items": {
+        "required": []
+      },
+      "title": "tolerations",
+      "type": "array"
+    },
+    "topologySpreadConstraints": {
+      "description": "Topology spread constraints (templated).",
+      "items": {
+        "required": []
+      },
+      "title": "topologySpreadConstraints",
+      "type": "array"
+    },
+    "volumeMounts": {
+      "description": "Additional volume mounts on the container (templated).",
+      "items": {
+        "required": []
+      },
+      "title": "volumeMounts",
+      "type": "array"
+    },
+    "volumes": {
+      "description": "Additional volumes on the pod (templated).",
+      "items": {
+        "required": []
+      },
+      "title": "volumes",
+      "type": "array"
+    }
+  },
+  "required": [],
+  "type": "object"
+}

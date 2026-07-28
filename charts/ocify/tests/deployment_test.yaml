@@ -1,0 +1,138 @@
+suite: deployment
+templates:
+  # secret.tpl is in scope because the deployment's checksum/secret annotation
+  # includes it; every test pins template: to the deployment.
+  - templates/deployment.tpl
+  - templates/secret.tpl
+release:
+  name: ocify
+  namespace: ocify
+tests:
+  - it: is a Deployment with a RollingUpdate strategy by default
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.strategy.type
+          value: RollingUpdate
+    template: templates/deployment.tpl
+  - it: wires the core OCIFY_* env
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OCIFY_PORT
+            value: "8080"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OCIFY_INDEX_TTL
+            value: 5m
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OCIFY_CACHE_MAX_BYTES
+            value: "268435456"
+    template: templates/deployment.tpl
+  - it: omits OCIFY_UPSTREAM_ALLOWLIST and OCIFY_AUTH by default
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OCIFY_UPSTREAM_ALLOWLIST
+        any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OCIFY_AUTH
+        any: true
+    template: templates/deployment.tpl
+  - it: joins the upstream allowlist into one env value
+    set:
+      config:
+        upstreamAllowlist: ["*.github.io", "charts.jetstack.io"]
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OCIFY_UPSTREAM_ALLOWLIST
+            value: "*.github.io,charts.jetstack.io"
+    template: templates/deployment.tpl
+  - it: sources OCIFY_AUTH from the chart-managed Secret when auth.users is set
+    set:
+      auth:
+        users: "flux:hunter2"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OCIFY_AUTH
+            valueFrom:
+              secretKeyRef:
+                name: ocify
+                key: auth
+      - exists:
+          path: spec.template.metadata.annotations["checksum/secret"]
+    template: templates/deployment.tpl
+  - it: sources OCIFY_AUTH from an existing Secret when given
+    set:
+      auth:
+        existingSecret: my-auth
+        existingSecretKey: users
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OCIFY_AUTH
+            valueFrom:
+              secretKeyRef:
+                name: my-auth
+                key: users
+      - notExists:
+          path: spec.template.metadata.annotations["checksum/secret"]
+    template: templates/deployment.tpl
+  - it: drops the metrics container port when metrics are disabled
+    set:
+      config:
+        metricsEnabled: false
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: metrics
+            containerPort: 8081
+            protocol: TCP
+    template: templates/deployment.tpl
+  - it: omits signing env and volumes by default
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OCIFY_SIGNING_KEY_PATH
+        any: true
+      - notExists:
+          path: spec.template.spec.volumes
+    template: templates/deployment.tpl
+  - it: mounts the signing key when signing.existingSecret is set
+    set:
+      signing:
+        existingSecret: ocify-signing
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OCIFY_SIGNING_KEY_PATH
+            value: /etc/ocify/signing/signing.key
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: signing-key
+            secret:
+              secretName: ocify-signing
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: signing-key
+            mountPath: /etc/ocify/signing
+            readOnly: true
+    template: templates/deployment.tpl
