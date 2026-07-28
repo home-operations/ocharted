@@ -38,7 +38,7 @@ const (
 // startProxy runs the registry handler on a loopback listener with a real
 // (guarded, no transport override) upstream client — the same wiring as
 // cmd/ocify, minus the process shell.
-func startProxy(t *testing.T, signer *sign.Signer) *httptest.Server {
+func startProxy(t *testing.T, signer *sign.Signer, rewriteHost string) *httptest.Server {
 	t.Helper()
 	cfg, err := config.Load()
 	if err != nil {
@@ -51,7 +51,13 @@ func startProxy(t *testing.T, signer *sign.Signer) *httptest.Server {
 		MaxChartBytes: cfg.MaxChartBytes,
 		UserAgent:     "ocify-e2e",
 	})
-	res := registry.NewResolver(up, cfg.ProvenanceEnabled, cfg.ResolveScanLimit, cfg.CacheMaxBytes, signer)
+	res := registry.NewResolver(up, registry.ResolverOptions{
+		Provenance:  cfg.ProvenanceEnabled,
+		ScanLimit:   cfg.ResolveScanLimit,
+		CacheBytes:  cfg.CacheMaxBytes,
+		Signer:      signer,
+		RewriteHost: rewriteHost,
+	})
 	srv := httptest.NewServer(registry.New(cfg, res, slog.New(slog.NewTextHandler(io.Discard, nil))).Handler())
 	t.Cleanup(srv.Close)
 	return srv
@@ -79,7 +85,7 @@ func run(t *testing.T, dir string, name string, args ...string) string {
 // and checks the tarball is byte-identical to what upstream published.
 func TestHelmPullThroughProxy(t *testing.T) {
 	requireTool(t, "helm")
-	srv := startProxy(t, nil)
+	srv := startProxy(t, nil, "")
 	host := strings.TrimPrefix(srv.URL, "http://")
 	dir := t.TempDir()
 
@@ -140,7 +146,7 @@ func TestCosignVerifyThroughProxy(t *testing.T) {
 		t.Fatalf("write public key: %v", err)
 	}
 
-	srv := startProxy(t, signer)
+	srv := startProxy(t, signer, "")
 	host := strings.TrimPrefix(srv.URL, "http://")
 
 	out := run(t, dir, "cosign", "verify",
@@ -150,5 +156,37 @@ func TestCosignVerifyThroughProxy(t *testing.T) {
 		host+"/"+upstreamRepo+"/"+chartName+":"+chartVersion)
 	if !strings.Contains(out, "cosign claims were validated") {
 		t.Fatalf("unexpected cosign verify output:\n%s", out)
+	}
+}
+
+// TestDependencyRewriteThroughProxy pulls a real chart that declares HTTP
+// dependencies (kube-prometheus-stack) through a rewrite-enabled proxy and
+// checks the unpacked Chart.yaml points its dependencies back through the
+// proxy's canonical name.
+func TestDependencyRewriteThroughProxy(t *testing.T) {
+	requireTool(t, "helm")
+	const (
+		depsRepo    = "prometheus-community.github.io/helm-charts"
+		depsChart   = "kube-prometheus-stack"
+		depsVersion = "65.0.0"
+	)
+
+	srv := startProxy(t, nil, "ocify.example.com")
+	host := strings.TrimPrefix(srv.URL, "http://")
+	dir := t.TempDir()
+
+	run(t, dir, "helm", "pull",
+		"oci://"+host+"/"+depsRepo+"/"+depsChart,
+		"--version", depsVersion, "--plain-http", "--untar")
+
+	raw, err := os.ReadFile(filepath.Join(dir, depsChart, "Chart.yaml"))
+	if err != nil {
+		t.Fatalf("unpacked Chart.yaml missing: %v", err)
+	}
+	if !strings.Contains(string(raw), "oci://ocify.example.com/grafana.github.io/helm-charts") {
+		t.Fatalf("dependencies not rewritten through the proxy:\n%s", raw)
+	}
+	if strings.Contains(string(raw), "repository: https://") {
+		t.Fatalf("HTTP dependency repositories survived rewriting:\n%s", raw)
 	}
 }

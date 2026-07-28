@@ -113,6 +113,39 @@ tests:
       - notExists:
           path: spec.template.spec.volumes
     template: templates/deployment.tpl
+  - it: omits rewrite env by default
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OCIFY_REWRITE_DEPENDENCIES
+        any: true
+    template: templates/deployment.tpl
+  - it: wires rewrite env when enabled with an external host
+    set:
+      config:
+        rewriteDependencies: true
+        externalHost: ocify.example.com
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OCIFY_REWRITE_DEPENDENCIES
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OCIFY_EXTERNAL_HOST
+            value: ocify.example.com
+    template: templates/deployment.tpl
+  - it: fails to render when rewrite is enabled without an external host
+    set:
+      config:
+        rewriteDependencies: true
+    asserts:
+      - failedTemplate:
+          errorPattern: config.externalHost is required
+    template: templates/deployment.tpl
   - it: mounts the signing key when signing.existingSecret is set
     set:
       signing:

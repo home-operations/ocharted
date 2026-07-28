@@ -54,6 +54,12 @@
           "title": "disableRequestLogs",
           "type": "boolean"
         },
+        "externalHost": {
+          "default": "",
+          "description": "Canonical client-facing hostname written into rewritten dependency URLs (OCIFY_EXTERNAL_HOST). Host only — no scheme, no path. Static so rewritten bytes are identical no matter which hostname a client used.",
+          "title": "externalHost",
+          "type": "string"
+        },
         "indexTTL": {
           "default": "5m",
           "description": "Upstream index.yaml cache TTL (OCIFY_INDEX_TTL) — how fast new chart versions appear, and how often upstreams are re-fetched.",
@@ -113,6 +119,12 @@
           "description": "Max candidate versions a cold by-digest lookup derives before giving up (OCIFY_RESOLVE_SCAN_LIMIT).",
           "title": "resolveScanLimit",
           "type": "integer"
+        },
+        "rewriteDependencies": {
+          "default": false,
+          "description": "Rewrite HTTP(S) dependency repository URLs inside served charts to point back through this proxy (OCIFY_REWRITE_DEPENDENCIES), so `helm dependency update` also resolves through it. Requires `externalHost`; mutually exclusive with `provenanceEnabled`. Trade-off: rewritten charts no longer hash to the digest upstream's index publishes.",
+          "title": "rewriteDependencies",
+          "type": "boolean"
         },
         "shutdownTimeout": {
           "default": "15s",

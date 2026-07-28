@@ -107,6 +107,12 @@ spec:
             - name: OCIFY_SIGNING_KEY_PATH
               value: /etc/ocify/signing/{{ .Values.signing.existingSecretKey }}
             {{- end }}
+            {{- if .Values.config.rewriteDependencies }}
+            - name: OCIFY_REWRITE_DEPENDENCIES
+              value: "true"
+            - name: OCIFY_EXTERNAL_HOST
+              value: {{ required "config.externalHost is required when config.rewriteDependencies is enabled" .Values.config.externalHost | quote }}
+            {{- end }}
             {{- range $k, $v := .Values.env }}
             - name: {{ $k }}
               value: {{ tpl (toString $v) $ | quote }}

@@ -1,6 +1,8 @@
 package registry
 
 import (
+	"bytes"
+	"compress/gzip"
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/sha256"
@@ -29,12 +31,13 @@ import (
 // fixture is a running registry handler backed by a fake upstream Helm repo
 // serving chart "demo" in versions 1.0.0, 1.1.0, and 2.0.0+meta.
 type fixture struct {
-	srv    *httptest.Server
-	upSrv  *httptest.Server
-	cfg    *config.Config
-	signer *sign.Signer
-	repo   string // upstream host:port, i.e. the first name segment(s)
-	charts map[string][]byte
+	srv         *httptest.Server
+	upSrv       *httptest.Server
+	cfg         *config.Config
+	signer      *sign.Signer
+	rewriteHost string
+	repo        string // upstream host:port, i.e. the first name segment(s)
+	charts      map[string][]byte
 }
 
 func newFixture(t *testing.T, mutate func(*config.Config)) *fixture {
@@ -55,8 +58,29 @@ func newFixture(t *testing.T, mutate func(*config.Config)) *fixture {
 			_, _ = w.Write(tgz)
 		})
 	}
+	// One extra chart carrying an HTTP dependency, for the rewrite tests.
+	withDeps := testchart.Tgz("withdeps", `apiVersion: v2
+name: withdeps
+version: 1.0.0
+dependencies:
+  - name: redis
+    version: 18.0.0
+    repository: https://charts.bitnami.com/bitnami
+`, nil)
+	charts["withdeps"] = withDeps
+	withDepsSum := sha256.Sum256(withDeps)
+	mux.HandleFunc("/charts/withdeps-1.0.0.tgz", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write(withDeps)
+	})
+
 	mux.HandleFunc("/index.yaml", func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = fmt.Fprintf(w, "entries:\n  demo:\n%s", entries.String())
+		_, _ = fmt.Fprintf(w, `entries:
+  demo:
+%s  withdeps:
+    - version: "1.0.0"
+      digest: %s
+      urls: ["charts/withdeps-1.0.0.tgz"]
+`, entries.String(), hex.EncodeToString(withDepsSum[:]))
 	})
 
 	upstreamSrv := httptest.NewTLSServer(mux)
@@ -94,7 +118,13 @@ func (f *fixture) newProxy(t *testing.T) *httptest.Server {
 		UserAgent:     "ocify-test",
 		Transport:     f.upSrv.Client().Transport,
 	})
-	res := NewResolver(up, f.cfg.ProvenanceEnabled, f.cfg.ResolveScanLimit, f.cfg.CacheMaxBytes, f.signer)
+	res := NewResolver(up, ResolverOptions{
+		Provenance:  f.cfg.ProvenanceEnabled,
+		ScanLimit:   f.cfg.ResolveScanLimit,
+		CacheBytes:  f.cfg.CacheMaxBytes,
+		Signer:      f.signer,
+		RewriteHost: f.rewriteHost,
+	})
 	s := New(f.cfg, res, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	proxy := httptest.NewServer(s.handler())
 	t.Cleanup(proxy.Close)
@@ -509,6 +539,98 @@ func TestSignatureForUnknownDigest(t *testing.T) {
 	if resp.StatusCode != http.StatusNotFound {
 		t.Fatalf("unknown-digest .sig status = %d, want 404 (never sign underivable digests)", resp.StatusCode)
 	}
+}
+
+// TestDependencyRewriting pulls a chart with an HTTP dependency through a
+// rewrite-enabled proxy and checks the served bytes: the dependency now
+// points back through the proxy, the layer digest diverges from upstream's
+// (the documented trade-off), and a cache-cold replica still resolves the
+// rewritten blob by digest via the scan path — the index-digest fast path
+// cannot help once served bytes differ from published ones.
+func TestDependencyRewriting(t *testing.T) {
+	f := newFixture(t, nil)
+	f.rewriteHost = "ocify.example.com"
+	proxy := f.newProxy(t)
+
+	get := func(srv *httptest.Server, path string) (*http.Response, []byte) {
+		resp, err := http.Get(srv.URL + path)
+		if err != nil {
+			t.Fatalf("GET %s: %v", path, err)
+		}
+		defer func() { _ = resp.Body.Close() }()
+		body, _ := io.ReadAll(resp.Body)
+		return resp, body
+	}
+	name := f.repo + "/withdeps"
+
+	resp, raw := get(proxy, "/v2/"+name+"/manifests/1.0.0")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("manifest status = %d", resp.StatusCode)
+	}
+	var m oci.Manifest
+	if err := json.Unmarshal(raw, &m); err != nil {
+		t.Fatalf("manifest decode: %v", err)
+	}
+	if m.Layers[0].Digest == oci.Digest(f.charts["withdeps"]) {
+		t.Fatal("rewritten layer digest should diverge from the upstream tarball digest")
+	}
+
+	blobResp, blob := get(proxy, "/v2/"+name+"/blobs/"+m.Layers[0].Digest)
+	if blobResp.StatusCode != http.StatusOK {
+		t.Fatalf("blob status = %d", blobResp.StatusCode)
+	}
+	if oci.Digest(blob) != m.Layers[0].Digest {
+		t.Fatal("served blob does not match its digest")
+	}
+	if !strings.Contains(string(mustGunzip(t, blob)), "oci://ocify.example.com/charts.bitnami.com/bitnami") {
+		t.Fatal("served chart does not contain the rewritten dependency URL")
+	}
+
+	// Config blob is derived from the rewritten tarball, so it reflects the
+	// rewritten dependency too.
+	_, cfgBlob := get(proxy, "/v2/"+name+"/blobs/"+m.Config.Digest)
+	if !strings.Contains(string(cfgBlob), "oci://ocify.example.com/charts.bitnami.com/bitnami") {
+		t.Fatalf("config blob does not reflect the rewrite: %s", cfgBlob)
+	}
+
+	// A cache-cold replica with the same rewrite config re-derives the same
+	// bytes, found via the bounded scan.
+	cold := f.newProxy(t)
+	coldResp, coldBlob := get(cold, "/v2/"+name+"/blobs/"+m.Layers[0].Digest)
+	if coldResp.StatusCode != http.StatusOK {
+		t.Fatalf("cold rewritten blob status = %d", coldResp.StatusCode)
+	}
+	if string(coldBlob) != string(blob) {
+		t.Fatal("cold replica derived different rewritten bytes")
+	}
+
+	// The default (non-rewriting) proxy still serves upstream bytes verbatim.
+	verbatimResp, verbatim := get(f.srv, "/v2/"+name+"/manifests/1.0.0")
+	if verbatimResp.StatusCode != http.StatusOK {
+		t.Fatalf("verbatim manifest status = %d", verbatimResp.StatusCode)
+	}
+	var vm oci.Manifest
+	if err := json.Unmarshal(verbatim, &vm); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if vm.Layers[0].Digest != oci.Digest(f.charts["withdeps"]) {
+		t.Fatal("non-rewriting proxy must keep the upstream layer digest")
+	}
+}
+
+// mustGunzip decompresses a gzip blob (tar content inspection is done by the
+// caller via plain substring match — the rewritten Chart.yaml is inside).
+func mustGunzip(t *testing.T, b []byte) []byte {
+	t.Helper()
+	gz, err := gzip.NewReader(bytes.NewReader(b))
+	if err != nil {
+		t.Fatalf("gunzip: %v", err)
+	}
+	out, err := io.ReadAll(gz)
+	if err != nil {
+		t.Fatalf("gunzip read: %v", err)
+	}
+	return out
 }
 
 // TestCacheControlHeaders checks the caching contract: by-digest responses are

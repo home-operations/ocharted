@@ -101,7 +101,17 @@ func run() error {
 			return err
 		}
 	}
-	resolver := registry.NewResolver(up, cfg.ProvenanceEnabled, cfg.ResolveScanLimit, cfg.CacheMaxBytes, signer)
+	var rewriteHost string
+	if cfg.RewriteDependencies {
+		rewriteHost = cfg.ExternalHost
+	}
+	resolver := registry.NewResolver(up, registry.ResolverOptions{
+		Provenance:  cfg.ProvenanceEnabled,
+		ScanLimit:   cfg.ResolveScanLimit,
+		CacheBytes:  cfg.CacheMaxBytes,
+		Signer:      signer,
+		RewriteHost: rewriteHost,
+	})
 
 	if cfg.Users == nil {
 		// Anonymous mode is a fine default for cluster-internal deployments;
@@ -125,6 +135,7 @@ func run() error {
 		"allowlist_hosts", len(cfg.UpstreamAllowlist),
 		"provenance", cfg.ProvenanceEnabled,
 		"signing", signer != nil,
+		"rewrite_dependencies", cfg.RewriteDependencies,
 		"gomaxprocs", runtime.GOMAXPROCS(0),
 	)
 

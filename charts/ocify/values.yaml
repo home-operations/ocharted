@@ -58,6 +58,10 @@ config:
   allowPrivateUpstreams: false
   # -- Fetch each chart's .prov file and attach it as the Helm provenance layer when upstream publishes one (OCIFY_PROVENANCE_ENABLED). Adds one upstream request per chart build.
   provenanceEnabled: false
+  # -- Rewrite HTTP(S) dependency repository URLs inside served charts to point back through this proxy (OCIFY_REWRITE_DEPENDENCIES), so `helm dependency update` also resolves through it. Requires `externalHost`; mutually exclusive with `provenanceEnabled`. Trade-off: rewritten charts no longer hash to the digest upstream's index publishes.
+  rewriteDependencies: false
+  # -- Canonical client-facing hostname written into rewritten dependency URLs (OCIFY_EXTERNAL_HOST). Host only — no scheme, no path. Static so rewritten bytes are identical no matter which hostname a client used.
+  externalHost: ""
   # -- Max candidate versions a cold by-digest lookup derives before giving up (OCIFY_RESOLVE_SCAN_LIMIT).
   resolveScanLimit: 25
   # -- Silence the per-request access log (OCIFY_DISABLE_REQUEST_LOGS).

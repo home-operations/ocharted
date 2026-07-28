@@ -28,24 +28,36 @@ var (
 // functions of the request plus upstream state, so any replica resolves any
 // reference — the cache only decides how much upstream work that takes.
 type Resolver struct {
-	up         *upstream.Client
-	provenance bool
-	scanLimit  int
-	cache      *artifactCache
-	sf         singleflight.Group
-	signer     *sign.Signer
+	up   *upstream.Client
+	opts ResolverOptions
+
+	cache *artifactCache
+	sf    singleflight.Group
 }
 
-// NewResolver builds a Resolver. scanLimit bounds cold by-digest scans;
-// provenance enables the optional .prov passthrough layer; signer (nil to
-// disable) serves cosign signature artifacts for every manifest.
-func NewResolver(up *upstream.Client, provenance bool, scanLimit int, cacheBytes int64, signer *sign.Signer) *Resolver {
+// ResolverOptions configures optional Resolver behavior.
+type ResolverOptions struct {
+	// Provenance enables the .prov passthrough layer.
+	Provenance bool
+	// ScanLimit bounds cold by-digest candidate scans.
+	ScanLimit int
+	// CacheBytes bounds the derived-artifact cache.
+	CacheBytes int64
+	// Signer (nil to disable) serves cosign signature artifacts for every
+	// manifest.
+	Signer *sign.Signer
+	// RewriteHost, when non-empty, rewrites HTTP(S) dependency repository
+	// URLs in served charts to oci://<RewriteHost>/… — see
+	// oci.RewriteDependencies for the constraints and trade-offs.
+	RewriteHost string
+}
+
+// NewResolver builds a Resolver.
+func NewResolver(up *upstream.Client, opts ResolverOptions) *Resolver {
 	return &Resolver{
-		up:         up,
-		provenance: provenance,
-		scanLimit:  scanLimit,
-		cache:      newArtifactCache(cacheBytes),
-		signer:     signer,
+		up:    up,
+		opts:  opts,
+		cache: newArtifactCache(opts.CacheBytes),
 	}
 }
 
@@ -176,7 +188,7 @@ func (r *Resolver) Blob(ctx context.Context, repo, chart, digest string) ([]byte
 }
 
 // SigningEnabled reports whether cosign signature serving is on.
-func (r *Resolver) SigningEnabled() bool { return r.signer != nil }
+func (r *Resolver) SigningEnabled() bool { return r.opts.Signer != nil }
 
 // Signature derives the cosign signature artifact for targetDigest, after
 // confirming the digest actually resolves to a manifest this proxy serves —
@@ -188,13 +200,13 @@ func (r *Resolver) SigningEnabled() bool { return r.signer != nil }
 // Signatures are not cached: derivation is pure CPU once the target artifact
 // is known.
 func (r *Resolver) Signature(ctx context.Context, repo, chart, targetDigest string) (*sign.Signature, error) {
-	if r.signer == nil {
+	if r.opts.Signer == nil {
 		return nil, fmt.Errorf("%w: signing disabled", ErrVersionUnknown)
 	}
 	if _, err := r.ByManifestDigest(ctx, repo, chart, targetDigest); err != nil {
 		return nil, err
 	}
-	return r.signer.Artifact(repo+"/"+chart, targetDigest)
+	return r.opts.Signer.Artifact(repo+"/"+chart, targetDigest)
 }
 
 // SignatureBlob resolves a signature payload/config blob by digest — the
@@ -202,11 +214,11 @@ func (r *Resolver) Signature(ctx context.Context, repo, chart, targetDigest stri
 // Signature blobs are derived per candidate manifest via the same bounded
 // scan as chart blobs, so this stays a pure function of the request.
 func (r *Resolver) SignatureBlob(ctx context.Context, repo, chart, digest string) ([]byte, string, error) {
-	if r.signer == nil {
+	if r.opts.Signer == nil {
 		return nil, "", fmt.Errorf("%w: signing disabled", ErrBlobUnknown)
 	}
 	art, err := r.scan(ctx, repo, chart, func(a *oci.Artifact) bool {
-		sig, err := r.signer.Artifact(repo+"/"+chart, a.ManifestDigest)
+		sig, err := r.opts.Signer.Artifact(repo+"/"+chart, a.ManifestDigest)
 		if err != nil {
 			return false
 		}
@@ -217,7 +229,7 @@ func (r *Resolver) SignatureBlob(ctx context.Context, repo, chart, digest string
 		return nil, "", err
 	}
 	if art != nil {
-		sig, err := r.signer.Artifact(repo+"/"+chart, art.ManifestDigest)
+		sig, err := r.opts.Signer.Artifact(repo+"/"+chart, art.ManifestDigest)
 		if err != nil {
 			return nil, "", err
 		}
@@ -238,7 +250,7 @@ func (r *Resolver) scan(ctx context.Context, repo, chart string, match func(*oci
 	if err != nil {
 		return nil, err
 	}
-	for _, entry := range entries[:min(len(entries), r.scanLimit)] {
+	for _, entry := range entries[:min(len(entries), r.opts.ScanLimit)] {
 		art, err := r.ByVersion(ctx, repo, chart, entry.Version)
 		if err != nil {
 			return nil, err
@@ -250,14 +262,22 @@ func (r *Resolver) scan(ctx context.Context, repo, chart string, match func(*oci
 	return nil, nil
 }
 
-// build downloads and derives one chart version.
+// build downloads and derives one chart version. Rewriting (when enabled)
+// happens after the download is verified against the upstream index digest,
+// so integrity against upstream still holds even though the served bytes
+// then diverge from it.
 func (r *Resolver) build(ctx context.Context, repo string, entry upstream.Entry) (*oci.Artifact, error) {
 	chart, err := r.up.Chart(ctx, repo, entry)
 	if err != nil {
 		return nil, err
 	}
+	if r.opts.RewriteHost != "" {
+		if chart, err = oci.RewriteDependencies(chart, r.opts.RewriteHost); err != nil {
+			return nil, err
+		}
+	}
 	var prov []byte
-	if r.provenance {
+	if r.opts.Provenance {
 		if prov, err = r.up.Prov(ctx, repo, entry); err != nil {
 			return nil, err
 		}

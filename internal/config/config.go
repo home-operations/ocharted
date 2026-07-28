@@ -4,6 +4,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -74,6 +75,20 @@ type Config struct {
 	// worst case of the stateless design: a blob request whose digest is in no
 	// replica's cache.
 	ResolveScanLimit int `env:"OCIFY_RESOLVE_SCAN_LIMIT" envDefault:"25"`
+
+	// RewriteDependencies rewrites HTTP(S) dependency repository URLs inside
+	// each served chart's Chart.yaml to point back through this proxy, so
+	// `helm dependency update` also resolves through it. Opt-in and
+	// deliberately constrained: it requires ExternalHost (rewritten bytes must
+	// be identical no matter which hostname a client used) and is mutually
+	// exclusive with ProvenanceEnabled (the upstream .prov signs the original
+	// tarball, which rewriting invalidates). Trade-off: rewritten charts no
+	// longer hash to the digest upstream's index publishes.
+	RewriteDependencies bool `env:"OCIFY_REWRITE_DEPENDENCIES" envDefault:"false"`
+	// ExternalHost is the canonical name clients use to reach this proxy
+	// (e.g. "ocify.example.com"), written into rewritten dependency URLs.
+	// Host only — no scheme, no path.
+	ExternalHost string `env:"OCIFY_EXTERNAL_HOST"`
 
 	// SigningKeyPath points at a PEM-encoded Ed25519 private key (PKCS#8).
 	// When set, ocify serves cosign signature artifacts for every manifest
@@ -197,6 +212,17 @@ func (c *Config) validate() error {
 	}
 	if c.ResolveScanLimit < 1 {
 		return fmt.Errorf("config: OCIFY_RESOLVE_SCAN_LIMIT must be >= 1, got %d", c.ResolveScanLimit)
+	}
+	if c.RewriteDependencies {
+		if c.ExternalHost == "" {
+			return errors.New("config: OCIFY_REWRITE_DEPENDENCIES requires OCIFY_EXTERNAL_HOST (rewritten URLs must not depend on the request hostname)")
+		}
+		if c.ProvenanceEnabled {
+			return errors.New("config: OCIFY_REWRITE_DEPENDENCIES and OCIFY_PROVENANCE_ENABLED are mutually exclusive (the .prov signature covers the original tarball, which rewriting invalidates)")
+		}
+	}
+	if c.ExternalHost != "" && (strings.Contains(c.ExternalHost, "://") || strings.Contains(c.ExternalHost, "/")) {
+		return fmt.Errorf("config: OCIFY_EXTERNAL_HOST must be a bare host, got %q", c.ExternalHost)
 	}
 	return nil
 }

@@ -50,6 +50,17 @@ func TestLoadRejectsInvalid(t *testing.T) {
 		"zero ttl":        {"OCIFY_INDEX_TTL": "0s"},
 		"zero scan limit": {"OCIFY_RESOLVE_SCAN_LIMIT": "0"},
 		"zero cache":      {"OCIFY_CACHE_MAX_BYTES": "0"},
+		"rewrite without external host": {
+			"OCIFY_REWRITE_DEPENDENCIES": "true",
+		},
+		"rewrite with provenance": {
+			"OCIFY_REWRITE_DEPENDENCIES": "true",
+			"OCIFY_EXTERNAL_HOST":        "ocify.example.com",
+			"OCIFY_PROVENANCE_ENABLED":   "true",
+		},
+		"external host with scheme": {
+			"OCIFY_EXTERNAL_HOST": "https://ocify.example.com",
+		},
 	}
 	for name, envs := range cases {
 		t.Run(strings.ReplaceAll(name, " ", "_"), func(t *testing.T) {

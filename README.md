@@ -146,6 +146,8 @@ Everything is environment variables; there is no config file.
 | `OCIFY_UPSTREAM_ALLOWLIST`      | _(empty)_   | Host globs permitted as upstreams (e.g. `*.github.io,charts.jetstack.io`); empty = any public host |
 | `OCIFY_ALLOW_PRIVATE_UPSTREAMS` | `false`     | Permit upstreams resolving to private addresses                                                    |
 | `OCIFY_PROVENANCE_ENABLED`      | `false`     | Attach upstream `.prov` files as the Helm provenance layer                                         |
+| `OCIFY_REWRITE_DEPENDENCIES`    | `false`     | Rewrite HTTP(S) dependency repository URLs through this proxy (see below)                          |
+| `OCIFY_EXTERNAL_HOST`           | _(empty)_   | Canonical client-facing hostname; required by dependency rewriting                                 |
 | `OCIFY_RESOLVE_SCAN_LIMIT`      | `25`        | Max candidate versions a cold by-digest lookup derives                                             |
 | `OCIFY_SIGNING_KEY_PATH`        | _(empty)_   | PEM-encoded Ed25519 private key; enables cosign signature serving                                  |
 | `OCIFY_LOG_LEVEL`               | `info`      | `debug`, `info`, `warn`, `error`                                                                   |
@@ -167,6 +169,45 @@ Responses carry caching headers: by-digest manifests and blobs are
 plain ingress ignores these, but a caching layer in front — e.g. a Cloudflare
 cache rule covering the ocify host — will serve the heavy immutable endpoints
 from its edge with no further configuration.
+
+## Dependency rewriting
+
+A chart's `Chart.yaml` can declare dependencies with hardcoded HTTP repository
+URLs; by default, `helm dependency update` fetches those straight from the
+original repos, bypassing the proxy. With `OCIFY_REWRITE_DEPENDENCIES=true`
+(and `OCIFY_EXTERNAL_HOST` set to the proxy's canonical name), ocify rewrites
+those URLs inside each served chart so dependency resolution also flows
+through it:
+
+```yaml
+# upstream Chart.yaml            # served Chart.yaml
+dependencies:                    dependencies:
+  - name: redis                    - name: redis
+    repository: https://charts.bitnami.com/bitnami
+                                     repository: oci://ocify.example.com/charts.bitnami.com/bitnami
+```
+
+`file://` paths, `@alias` references, and already-OCI URLs are left alone, and
+charts with nothing to rewrite pass through byte-for-byte. Rewriting stays a
+pure function — the same inputs produce identical bytes on every replica —
+because the rewrite target is the static `OCIFY_EXTERNAL_HOST`, never the
+request hostname.
+
+**Trade-offs, deliberately explicit:**
+
+- Rewritten charts no longer hash to the digest upstream's index publishes.
+  "You got exactly upstream's bytes" stops holding — which is why this is
+  off by default and why cosign signing (below) is worth enabling alongside
+  it, as ocify's signature becomes the artifact's only integrity attestation.
+- It is mutually exclusive with `OCIFY_PROVENANCE_ENABLED`: the upstream
+  `.prov` signs the original tarball, and serving it beside rewritten bytes
+  would present a signature that verifies against nothing. ocify refuses the
+  combination at startup.
+- The upstream download is still digest-verified _before_ rewriting, so
+  integrity against upstream holds internally; only the served digest
+  diverges.
+- Cold by-digest lookups lose the index-digest fast path for rewritten charts
+  and fall back to the bounded scan — correct, marginally slower.
 
 ## Cosign signing
 
@@ -251,10 +292,12 @@ What it adds:
   responses edge-cacheable.
 - **A documented Renovate story** for every deployment topology.
 
-In the other direction, helm-charts-oci-proxy offers dependency URL rewriting
-(pointing a chart's `Chart.yaml` dependencies back through the proxy) and a
-free hosted instance. ocify deliberately never rewrites chart contents — the
-tarball is served byte-for-byte so its digest matches what upstream published.
+In the other direction, helm-charts-oci-proxy offers a free hosted instance.
+Its dependency URL rewriting also exists here, but more constrained: ocify's
+version is a deployment-level opt-in requiring a static external hostname (no
+per-request toggle, no request-Host fallback), so rewritten bytes stay
+deterministic across replicas — and it is off by default, because serving
+upstream's bytes verbatim is the property everything else is built on.
 
 ## Non-goals
 
