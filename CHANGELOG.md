@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.1.1](https://github.com/home-operations/ocharted/compare/0.1.0...0.1.1) (2026-07-28)
+
+
+### Features
+
+* **chart:** add Gateway API HTTPRoute support ([8b8e2af](https://github.com/home-operations/ocharted/commit/8b8e2afb219b88212b51d00b16b792c4389aa766))
+* **chart:** add Gateway API HTTPRoute support ([#6](https://github.com/home-operations/ocharted/issues/6)) ([1d38b5e](https://github.com/home-operations/ocharted/commit/1d38b5e929bcd1aef5d2604916f71db0b21cce41))
+
+
+### Reverts
+
+* chart HTTPRoute support pending review ([10ff834](https://github.com/home-operations/ocharted/commit/10ff83456a2c07e0ee0ab8f915e798f6b2fcb616))
+
+
+### Miscellaneous Chores
+
+* **mise:** Update tool oxfmt (0.60.0 → 0.61.0) ([#3](https://github.com/home-operations/ocharted/issues/3)) ([ff097cb](https://github.com/home-operations/ocharted/commit/ff097cbda863f2a4e1a068136ca00739d79c6b5c))
+
 ## 0.1.0 (2026-07-28)
 
 
