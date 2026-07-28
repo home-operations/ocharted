@@ -85,6 +85,17 @@ Kubernetes: `>=1.25.0-0`
 | envFrom | list | `[]` | Sources of environment variables (templated), e.g. `- secretRef: { name: ocharted-auth }`. |
 | extraEnv | list | `[]` | Extra environment variables as a raw list (templated), e.g. valueFrom a Secret key. |
 | fullnameOverride | string | `""` | Override the generated name used for every resource's `metadata.name` (the chart "fullname"). |
+| httpRoute.additionalRules | list | `[]` | Custom rules prepended before the default rule (templated). |
+| httpRoute.annotations | object | `{}` | HTTPRoute annotations. |
+| httpRoute.apiVersion | string | `""` | HTTPRoute apiVersion; empty defaults to gateway.networking.k8s.io/v1. |
+| httpRoute.enabled | bool | `false` | Expose the registry via a Gateway API HTTPRoute. |
+| httpRoute.filters | list | `[]` | Filters applied to the default rule. |
+| httpRoute.hostnames | list | `[]` | Hostnames matched against the Host header (templated). The hostname clients use is also what goes into OCIRepository URLs — and into `config.externalHost` when dependency rewriting is enabled. |
+| httpRoute.httpsRedirect | bool | `false` | Redirect HTTP→HTTPS (301) instead of routing to the backend (needs a Gateway with HTTP+HTTPS listeners); matches/filters are ignored. |
+| httpRoute.kind | string | `""` | HTTPRoute kind; empty defaults to HTTPRoute. |
+| httpRoute.labels | object | `{}` | HTTPRoute labels. |
+| httpRoute.matches | list | `[{"path":{"type":"PathPrefix","value":"/"}}]` | Match conditions for the default rule. |
+| httpRoute.parentRefs | list | `[]` | Gateways (and listeners) this route attaches to. |
 | image.digest | string | `""` | Pin the image by digest (sha256:…); set by the release pipeline. When set, it overrides the tag. |
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
 | image.repository | string | `"ghcr.io/home-operations/ocharted"` | Image repository. |

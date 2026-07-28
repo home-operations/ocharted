@@ -172,6 +172,46 @@ service:
   # -- externalTrafficPolicy (only applied when type is not ClusterIP).
   externalTrafficPolicy: ""
 
+# Gateway API HTTPRoute for exposing the registry; renders one route to the
+# registry service port. This is how the public/authenticated deployment tiers
+# get their hostname (pair with `auth` and `config.upstreamAllowlist` before
+# exposing). Named `httpRoute` (not `route`) to avoid confusion with the
+# OpenShift Route kind.
+httpRoute:
+  # -- Expose the registry via a Gateway API HTTPRoute.
+  enabled: false
+  # -- HTTPRoute apiVersion; empty defaults to gateway.networking.k8s.io/v1.
+  apiVersion: ""
+  # -- HTTPRoute kind; empty defaults to HTTPRoute.
+  kind: ""
+  # -- HTTPRoute annotations.
+  annotations: {}
+  # -- HTTPRoute labels.
+  labels: {}
+  # -- Gateways (and listeners) this route attaches to.
+  parentRefs: []
+  #  - name: gateway
+  #    namespace: gateway
+  #    sectionName: https
+
+  # -- Hostnames matched against the Host header (templated). The hostname
+  # clients use is also what goes into OCIRepository URLs — and into
+  # `config.externalHost` when dependency rewriting is enabled.
+  hostnames: []
+  #  - ocharted.example.com
+
+  # -- Custom rules prepended before the default rule (templated).
+  additionalRules: []
+  # -- Filters applied to the default rule.
+  filters: []
+  # -- Match conditions for the default rule.
+  matches:
+    - path:
+        type: PathPrefix
+        value: /
+  # -- Redirect HTTP→HTTPS (301) instead of routing to the backend (needs a Gateway with HTTP+HTTPS listeners); matches/filters are ignored.
+  httpsRedirect: false
+
 monitoring:
   serviceMonitor:
     # -- Create a Prometheus Operator ServiceMonitor (requires its CRDs and `config.metricsEnabled`).
