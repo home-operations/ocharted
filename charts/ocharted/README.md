@@ -1,8 +1,8 @@
 # ocharted
 
-![Version](https://img.shields.io/static/v1?label=Version&message=0.1.2&color=informational&style=flat-square) <!-- x-release-please-version -->
+![Version](https://img.shields.io/static/v1?label=Version&message=0.1.3&color=informational&style=flat-square) <!-- x-release-please-version -->
 ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
-![AppVersion](https://img.shields.io/static/v1?label=AppVersion&message=0.1.2&color=informational&style=flat-square) <!-- x-release-please-version -->
+![AppVersion](https://img.shields.io/static/v1?label=AppVersion&message=0.1.3&color=informational&style=flat-square) <!-- x-release-please-version -->
 
 > To OCI, your classic Helm repos are *uncharted* territory. Point this proxy
 > at them and consider them **ocharted**.
