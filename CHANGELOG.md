@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/home-operations/ocharted/compare/0.1.1...0.1.2) (2026-07-28)
+
+
+### Features
+
+* trusted-network auth bypass for cluster-local clients ([#7](https://github.com/home-operations/ocharted/issues/7)) ([aaf3862](https://github.com/home-operations/ocharted/commit/aaf38628a2ff2c5d9dc56591daabfc53a58ab858))
+
 ## [0.1.1](https://github.com/home-operations/ocharted/compare/0.1.0...0.1.1) (2026-07-28)
 
 
