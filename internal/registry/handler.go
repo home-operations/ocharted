@@ -200,15 +200,7 @@ func (s *Server) handleManifest(w http.ResponseWriter, r *http.Request, repo, ch
 		s.writeResolveError(w, r, err)
 		return
 	}
-
-	h := w.Header()
-	h.Set("Cache-Control", cacheControl)
-	h.Set("Content-Type", oci.ManifestMediaType)
-	h.Set("Docker-Content-Digest", art.ManifestDigest)
-	h.Set("Content-Length", strconv.Itoa(len(art.Manifest)))
-	if r.Method == http.MethodGet {
-		_, _ = w.Write(art.Manifest)
-	}
+	writeContent(w, r, cacheControl, oci.ManifestMediaType, art.ManifestDigest, art.Manifest)
 }
 
 // handleSignatureManifest serves the cosign signature manifest for a target
@@ -220,17 +212,9 @@ func (s *Server) handleSignatureManifest(w http.ResponseWriter, r *http.Request,
 		s.writeResolveError(w, r, err)
 		return
 	}
-
-	h := w.Header()
 	// The .sig tag's content shifts if the signing key rotates, so it gets the
 	// mutable lifetime even though its target digest is fixed.
-	h.Set("Cache-Control", s.mutableCacheControl())
-	h.Set("Content-Type", oci.ManifestMediaType)
-	h.Set("Docker-Content-Digest", sig.ManifestDigest)
-	h.Set("Content-Length", strconv.Itoa(len(sig.Manifest)))
-	if r.Method == http.MethodGet {
-		_, _ = w.Write(sig.Manifest)
-	}
+	writeContent(w, r, s.mutableCacheControl(), oci.ManifestMediaType, sig.ManifestDigest, sig.Manifest)
 }
 
 // sigTagTarget parses cosign's signature tag convention
@@ -267,13 +251,19 @@ func (s *Server) handleBlob(w http.ResponseWriter, r *http.Request, repo, chart,
 		s.writeResolveError(w, r, err)
 		return
 	}
+	writeContent(w, r, immutableCacheControl, "application/octet-stream", digest, data)
+}
 
+// writeContent writes the shared content headers for manifest and blob
+// responses and, on GET (never HEAD), the body. The spec requires identical
+// headers on both methods.
+func writeContent(w http.ResponseWriter, r *http.Request, cacheControl, contentType, digest string, body []byte) {
 	h := w.Header()
-	h.Set("Cache-Control", immutableCacheControl)
-	h.Set("Content-Type", "application/octet-stream")
+	h.Set("Cache-Control", cacheControl)
+	h.Set("Content-Type", contentType)
 	h.Set("Docker-Content-Digest", digest)
-	h.Set("Content-Length", strconv.Itoa(len(data)))
+	h.Set("Content-Length", strconv.Itoa(len(body)))
 	if r.Method == http.MethodGet {
-		_, _ = w.Write(data)
+		_, _ = w.Write(body)
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 
 	"github.com/home-operations/ocify/internal/oci"
 	"github.com/home-operations/ocify/internal/sign"
@@ -49,79 +49,28 @@ func NewResolver(up *upstream.Client, provenance bool, scanLimit int, cacheBytes
 	}
 }
 
-// SigningEnabled reports whether cosign signature serving is on.
-func (r *Resolver) SigningEnabled() bool { return r.signer != nil }
-
-// Signature derives the cosign signature artifact for targetDigest, after
-// confirming the digest actually resolves to a manifest this proxy serves —
-// ocify must never sign a digest it cannot derive. The payload's
-// docker-reference is the bare name (repo/chart) without a registry host: the
-// same chart is addressed through several hostnames (cluster-internal
-// Service, public ingress), and signature bytes must be identical through all
-// of them. Cosign's claim verification checks the digest, not the reference.
-// Signatures are not cached: derivation is pure CPU once the target artifact
-// is known.
-func (r *Resolver) Signature(ctx context.Context, repo, chart, targetDigest string) (*sign.Signature, error) {
-	if r.signer == nil {
-		return nil, fmt.Errorf("%w: signing disabled", ErrVersionUnknown)
-	}
-	if _, err := r.ByManifestDigest(ctx, repo, chart, targetDigest); err != nil {
-		return nil, err
-	}
-	return r.signer.Artifact(repo+"/"+chart, targetDigest)
-}
-
-// SignatureBlob resolves a signature payload/config blob by digest — the
-// cold-replica path for the blob fetches that follow a .sig manifest pull.
-// Signature blobs are derived per candidate manifest (cached artifacts, then
-// the bounded scan), so this stays a pure function of the request.
-func (r *Resolver) SignatureBlob(ctx context.Context, repo, chart, digest string) ([]byte, string, error) {
-	if r.signer == nil {
-		return nil, "", fmt.Errorf("%w: signing disabled", ErrBlobUnknown)
-	}
-	match := func(art *oci.Artifact) ([]byte, string, bool) {
-		sig, err := r.signer.Artifact(repo+"/"+chart, art.ManifestDigest)
-		if err != nil {
-			return nil, "", false
-		}
-		data, mt, ok := sig.Blob(digest)
-		return data, mt, ok
-	}
-
+// entries fetches the upstream index and the chart's version entries,
+// translating an absent chart into ErrChartUnknown. Every lookup goes through
+// here so that check lives in exactly one place.
+func (r *Resolver) entries(ctx context.Context, repo, chart string) (*upstream.Index, []upstream.Entry, error) {
 	idx, err := r.up.Index(ctx, repo)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 	entries := idx.Versions(chart)
 	if len(entries) == 0 {
-		return nil, "", fmt.Errorf("%w: %s/%s", ErrChartUnknown, repo, chart)
+		return nil, nil, fmt.Errorf("%w: %s/%s", ErrChartUnknown, repo, chart)
 	}
-	if len(entries) > r.scanLimit {
-		entries = entries[:r.scanLimit]
-	}
-	for _, entry := range entries {
-		art, err := r.ByVersion(ctx, repo, chart, entry.Version)
-		if err != nil {
-			return nil, "", err
-		}
-		if data, mt, ok := match(art); ok {
-			return data, mt, nil
-		}
-	}
-	return nil, "", fmt.Errorf("%w: %s/%s %s", ErrBlobUnknown, repo, chart, digest)
+	return idx, entries, nil
 }
 
 // Tags lists the chart's versions as OCI tags, lexically sorted (the
 // distribution spec's tags/list order). Versions that can't be expressed as a
 // tag are skipped.
 func (r *Resolver) Tags(ctx context.Context, repo, chart string) ([]string, error) {
-	idx, err := r.up.Index(ctx, repo)
+	_, entries, err := r.entries(ctx, repo, chart)
 	if err != nil {
 		return nil, err
-	}
-	entries := idx.Versions(chart)
-	if len(entries) == 0 {
-		return nil, fmt.Errorf("%w: %s/%s", ErrChartUnknown, repo, chart)
 	}
 	tags := make([]string, 0, len(entries))
 	for _, e := range entries {
@@ -129,7 +78,7 @@ func (r *Resolver) Tags(ctx context.Context, repo, chart string) ([]string, erro
 			tags = append(tags, tag)
 		}
 	}
-	sort.Strings(tags)
+	slices.Sort(tags)
 	return tags, nil
 }
 
@@ -146,12 +95,9 @@ func (r *Resolver) ByVersion(ctx context.Context, repo, chart, version string) (
 		if art, ok := r.cache.get(key); ok {
 			return art, nil
 		}
-		idx, err := r.up.Index(ctx, repo)
+		idx, _, err := r.entries(ctx, repo, chart)
 		if err != nil {
 			return nil, err
-		}
-		if len(idx.Versions(chart)) == 0 {
-			return nil, fmt.Errorf("%w: %s/%s", ErrChartUnknown, repo, chart)
 		}
 		entry, ok := idx.FindVersion(chart, version)
 		if !ok {
@@ -200,12 +146,9 @@ func (r *Resolver) Blob(ctx context.Context, repo, chart, digest string) ([]byte
 		}
 	}
 
-	idx, err := r.up.Index(ctx, repo)
+	idx, _, err := r.entries(ctx, repo, chart)
 	if err != nil {
 		return nil, "", err
-	}
-	if len(idx.Versions(chart)) == 0 {
-		return nil, "", fmt.Errorf("%w: %s/%s", ErrChartUnknown, repo, chart)
 	}
 	if entry, ok := idx.FindLayerDigest(chart, digest); ok {
 		art, err := r.ByVersion(ctx, repo, chart, entry.Version)
@@ -232,24 +175,70 @@ func (r *Resolver) Blob(ctx context.Context, repo, chart, digest string) ([]byte
 	return nil, "", fmt.Errorf("%w: %s/%s %s", ErrBlobUnknown, repo, chart, digest)
 }
 
+// SigningEnabled reports whether cosign signature serving is on.
+func (r *Resolver) SigningEnabled() bool { return r.signer != nil }
+
+// Signature derives the cosign signature artifact for targetDigest, after
+// confirming the digest actually resolves to a manifest this proxy serves —
+// ocify must never sign a digest it cannot derive. The payload's
+// docker-reference is the bare name (repo/chart) without a registry host: the
+// same chart is addressed through several hostnames (cluster-internal
+// Service, public ingress), and signature bytes must be identical through all
+// of them. Cosign's claim verification checks the digest, not the reference.
+// Signatures are not cached: derivation is pure CPU once the target artifact
+// is known.
+func (r *Resolver) Signature(ctx context.Context, repo, chart, targetDigest string) (*sign.Signature, error) {
+	if r.signer == nil {
+		return nil, fmt.Errorf("%w: signing disabled", ErrVersionUnknown)
+	}
+	if _, err := r.ByManifestDigest(ctx, repo, chart, targetDigest); err != nil {
+		return nil, err
+	}
+	return r.signer.Artifact(repo+"/"+chart, targetDigest)
+}
+
+// SignatureBlob resolves a signature payload/config blob by digest — the
+// cold-replica path for the blob fetches that follow a .sig manifest pull.
+// Signature blobs are derived per candidate manifest via the same bounded
+// scan as chart blobs, so this stays a pure function of the request.
+func (r *Resolver) SignatureBlob(ctx context.Context, repo, chart, digest string) ([]byte, string, error) {
+	if r.signer == nil {
+		return nil, "", fmt.Errorf("%w: signing disabled", ErrBlobUnknown)
+	}
+	art, err := r.scan(ctx, repo, chart, func(a *oci.Artifact) bool {
+		sig, err := r.signer.Artifact(repo+"/"+chart, a.ManifestDigest)
+		if err != nil {
+			return false
+		}
+		_, _, ok := sig.Blob(digest)
+		return ok
+	})
+	if err != nil {
+		return nil, "", err
+	}
+	if art != nil {
+		sig, err := r.signer.Artifact(repo+"/"+chart, art.ManifestDigest)
+		if err != nil {
+			return nil, "", err
+		}
+		if data, mt, ok := sig.Blob(digest); ok {
+			return data, mt, nil
+		}
+	}
+	return nil, "", fmt.Errorf("%w: %s/%s %s", ErrBlobUnknown, repo, chart, digest)
+}
+
 // scan derives candidate versions newest-first until match says stop, giving
 // up (nil, nil) after scanLimit candidates. Real clients request blobs
 // milliseconds after the manifest that referenced them, so this cold path is
 // rare — the bound keeps its worst case (a digest that matches nothing)
 // proportional to scanLimit downloads, not the whole version history.
 func (r *Resolver) scan(ctx context.Context, repo, chart string, match func(*oci.Artifact) bool) (*oci.Artifact, error) {
-	idx, err := r.up.Index(ctx, repo)
+	_, entries, err := r.entries(ctx, repo, chart)
 	if err != nil {
 		return nil, err
 	}
-	entries := idx.Versions(chart)
-	if len(entries) == 0 {
-		return nil, fmt.Errorf("%w: %s/%s", ErrChartUnknown, repo, chart)
-	}
-	if len(entries) > r.scanLimit {
-		entries = entries[:r.scanLimit]
-	}
-	for _, entry := range entries {
+	for _, entry := range entries[:min(len(entries), r.scanLimit)] {
 		art, err := r.ByVersion(ctx, repo, chart, entry.Version)
 		if err != nil {
 			return nil, err

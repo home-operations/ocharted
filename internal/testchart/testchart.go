@@ -6,7 +6,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"sort"
+	"maps"
+	"slices"
 )
 
 // Tgz returns a gzipped chart tarball containing <name>/Chart.yaml with the
@@ -32,12 +33,7 @@ func Tgz(name, chartYAML string, extra map[string]string) []byte {
 	}
 
 	write("Chart.yaml", chartYAML)
-	paths := make([]string, 0, len(extra))
-	for p := range extra {
-		paths = append(paths, p)
-	}
-	sort.Strings(paths)
-	for _, p := range paths {
+	for _, p := range slices.Sorted(maps.Keys(extra)) {
 		write(p, extra[p])
 	}
 
