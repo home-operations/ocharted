@@ -1,4 +1,4 @@
-# ocify
+# ocharted
 
 {{ template "chart.deprecationWarning" . }}
 
@@ -12,9 +12,12 @@ sync with the stamped Chart.yaml. */}}
 ![Type: {{ .Type }}](https://img.shields.io/badge/Type-{{ .Type }}-informational?style=flat-square)
 ![AppVersion](https://img.shields.io/static/v1?label=AppVersion&message={{ .AppVersion }}&color=informational&style=flat-square) <!-- x-release-please-version -->
 
+> To OCI, your classic Helm repos are *uncharted* territory. Point this proxy
+> at them and consider them **ocharted**.
+
 A stateless **OCI registry proxy** for classic Helm repositories: any chart in
 any HTTP Helm repo becomes pullable as
-`oci://<ocify-host>/<upstream-host[/path]>/<chart>` — usable in a Flux
+`oci://<ocharted-host>/<upstream-host[/path]>/<chart>` — usable in a Flux
 `OCIRepository` or with `helm install oci://…` even though upstream never
 published OCI artifacts. Everything is derived on demand from upstream: no
 volume, no database, and replicas need no coordination.
@@ -24,12 +27,12 @@ volume, no database, and replicas need no coordination.
 ## Installing
 
 ```bash
-helm install ocify oci://ghcr.io/home-operations/charts/ocify --version <version>
+helm install ocharted oci://ghcr.io/home-operations/charts/ocharted --version <version>
 ```
 
 ## Configuration
 
-Every setting maps to an `OCIFY_*` environment variable via the `config.*`
+Every setting maps to an `OCHARTED_*` environment variable via the `config.*`
 values; the only secret is the optional basic-auth user list (`auth.users`, or
 `auth.existingSecret` for a SOPS/sealed Secret). Two settings deserve
 deliberate choices:

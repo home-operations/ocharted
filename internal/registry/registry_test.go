@@ -21,11 +21,11 @@ import (
 
 	"log/slog"
 
-	"github.com/home-operations/ocify/internal/config"
-	"github.com/home-operations/ocify/internal/oci"
-	"github.com/home-operations/ocify/internal/sign"
-	"github.com/home-operations/ocify/internal/testchart"
-	"github.com/home-operations/ocify/internal/upstream"
+	"github.com/home-operations/ocharted/internal/config"
+	"github.com/home-operations/ocharted/internal/oci"
+	"github.com/home-operations/ocharted/internal/sign"
+	"github.com/home-operations/ocharted/internal/testchart"
+	"github.com/home-operations/ocharted/internal/upstream"
 )
 
 // fixture is a running registry handler backed by a fake upstream Helm repo
@@ -116,7 +116,7 @@ func (f *fixture) newProxy(t *testing.T) *httptest.Server {
 		MaxChartBytes: f.cfg.MaxChartBytes,
 		AllowPrivate:  true,
 		AllowedHosts:  f.cfg.UpstreamAllowlist,
-		UserAgent:     "ocify-test",
+		UserAgent:     "ocharted-test",
 		Transport:     f.upSrv.Client().Transport,
 	})
 	res := NewResolver(up, ResolverOptions{
@@ -550,7 +550,7 @@ func TestSignatureForUnknownDigest(t *testing.T) {
 // cannot help once served bytes differ from published ones.
 func TestDependencyRewriting(t *testing.T) {
 	f := newFixture(t, nil)
-	f.rewriteHost = "ocify.example.com"
+	f.rewriteHost = "ocharted.example.com"
 	proxy := f.newProxy(t)
 
 	get := func(srv *httptest.Server, path string) (*http.Response, []byte) {
@@ -583,14 +583,14 @@ func TestDependencyRewriting(t *testing.T) {
 	if oci.Digest(blob) != m.Layers[0].Digest {
 		t.Fatal("served blob does not match its digest")
 	}
-	if !strings.Contains(string(mustGunzip(t, blob)), "oci://ocify.example.com/charts.bitnami.com/bitnami") {
+	if !strings.Contains(string(mustGunzip(t, blob)), "oci://ocharted.example.com/charts.bitnami.com/bitnami") {
 		t.Fatal("served chart does not contain the rewritten dependency URL")
 	}
 
 	// Config blob is derived from the rewritten tarball, so it reflects the
 	// rewritten dependency too.
 	_, cfgBlob := get(proxy, "/v2/"+name+"/blobs/"+m.Config.Digest)
-	if !strings.Contains(string(cfgBlob), "oci://ocify.example.com/charts.bitnami.com/bitnami") {
+	if !strings.Contains(string(cfgBlob), "oci://ocharted.example.com/charts.bitnami.com/bitnami") {
 		t.Fatalf("config blob does not reflect the rewrite: %s", cfgBlob)
 	}
 

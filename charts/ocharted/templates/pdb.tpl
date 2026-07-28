@@ -2,10 +2,10 @@
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: {{ include "ocify.fullname" . }}
+  name: {{ include "ocharted.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "ocify.labels" . | nindent 4 }}
+    {{- include "ocharted.labels" . | nindent 4 }}
 spec:
   {{- if .Values.podDisruptionBudget.maxUnavailable }}
   maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
@@ -14,5 +14,5 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "ocify.selectorLabels" . | nindent 6 }}
+      {{- include "ocharted.selectorLabels" . | nindent 6 }}
 {{- end }}

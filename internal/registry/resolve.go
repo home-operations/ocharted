@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/home-operations/ocify/internal/oci"
-	"github.com/home-operations/ocify/internal/sign"
-	"github.com/home-operations/ocify/internal/upstream"
+	"github.com/home-operations/ocharted/internal/oci"
+	"github.com/home-operations/ocharted/internal/sign"
+	"github.com/home-operations/ocharted/internal/upstream"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -192,7 +192,7 @@ func (r *Resolver) SigningEnabled() bool { return r.opts.Signer != nil }
 
 // Signature derives the cosign signature artifact for targetDigest, after
 // confirming the digest actually resolves to a manifest this proxy serves —
-// ocify must never sign a digest it cannot derive. The payload's
+// ocharted must never sign a digest it cannot derive. The payload's
 // docker-reference is the bare name (repo/chart) without a registry host: the
 // same chart is addressed through several hostnames (cluster-internal
 // Service, public ingress), and signature bytes must be identical through all

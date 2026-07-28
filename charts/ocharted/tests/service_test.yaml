@@ -2,8 +2,8 @@ suite: service
 templates:
   - templates/service.tpl
 release:
-  name: ocify
-  namespace: ocify
+  name: ocharted
+  namespace: ocharted
 tests:
   - it: exposes http and metrics ports by default
     asserts:

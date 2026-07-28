@@ -1,8 +1,8 @@
-ocify {{ .Chart.AppVersion }} is deployed as {{ include "ocify.fullname" . }} in namespace {{ .Release.Namespace }}.
+ocharted {{ .Chart.AppVersion }} is deployed as {{ include "ocharted.fullname" . }} in namespace {{ .Release.Namespace }}.
 
 Any chart in any HTTP Helm repository is now pullable as:
 
-  oci://{{ include "ocify.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/<upstream-host[/path]>/<chart>
+  oci://{{ include "ocharted.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/<upstream-host[/path]>/<chart>
 
 {{- if and (not .Values.auth.users) (not .Values.auth.existingSecret) }}
 
@@ -27,7 +27,7 @@ Point a Flux OCIRepository at it (replace host/chart/version):
       operation: copy
     ref:
       tag: v1.18.2
-    url: oci://{{ include "ocify.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/charts.jetstack.io/cert-manager
+    url: oci://{{ include "ocharted.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/charts.jetstack.io/cert-manager
 {{- if or .Values.auth.users .Values.auth.existingSecret }}
     secretRef:
       name: <dockerconfigjson secret for this registry>
@@ -35,4 +35,4 @@ Point a Flux OCIRepository at it (replace host/chart/version):
 
 Or pull from inside the cluster:
 
-  helm pull oci://{{ include "ocify.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/charts.jetstack.io/cert-manager --version v1.18.2 --plain-http
+  helm pull oci://{{ include "ocharted.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/charts.jetstack.io/cert-manager --version v1.18.2 --plain-http

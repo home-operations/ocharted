@@ -26,8 +26,8 @@ func TestLoadDefaults(t *testing.T) {
 }
 
 func TestLoadAuthAndAllowlist(t *testing.T) {
-	t.Setenv("OCIFY_AUTH", "flux:hunter2, renovate:s3cret")
-	t.Setenv("OCIFY_UPSTREAM_ALLOWLIST", "*.github.io, charts.jetstack.io ,")
+	t.Setenv("OCHARTED_AUTH", "flux:hunter2, renovate:s3cret")
+	t.Setenv("OCHARTED_UPSTREAM_ALLOWLIST", "*.github.io, charts.jetstack.io ,")
 
 	cfg, err := Load()
 	if err != nil {
@@ -43,23 +43,23 @@ func TestLoadAuthAndAllowlist(t *testing.T) {
 
 func TestLoadRejectsInvalid(t *testing.T) {
 	cases := map[string]map[string]string{
-		"bad auth entry":  {"OCIFY_AUTH": "nopassword"},
-		"port collision":  {"OCIFY_PORT": "9000", "OCIFY_METRICS_PORT": "9000"},
-		"bad log format":  {"OCIFY_LOG_FORMAT": "xml"},
-		"bad log level":   {"OCIFY_LOG_LEVEL": "loud"},
-		"zero ttl":        {"OCIFY_INDEX_TTL": "0s"},
-		"zero scan limit": {"OCIFY_RESOLVE_SCAN_LIMIT": "0"},
-		"zero cache":      {"OCIFY_CACHE_MAX_BYTES": "0"},
+		"bad auth entry":  {"OCHARTED_AUTH": "nopassword"},
+		"port collision":  {"OCHARTED_PORT": "9000", "OCHARTED_METRICS_PORT": "9000"},
+		"bad log format":  {"OCHARTED_LOG_FORMAT": "xml"},
+		"bad log level":   {"OCHARTED_LOG_LEVEL": "loud"},
+		"zero ttl":        {"OCHARTED_INDEX_TTL": "0s"},
+		"zero scan limit": {"OCHARTED_RESOLVE_SCAN_LIMIT": "0"},
+		"zero cache":      {"OCHARTED_CACHE_MAX_BYTES": "0"},
 		"rewrite without external host": {
-			"OCIFY_REWRITE_DEPENDENCIES": "true",
+			"OCHARTED_REWRITE_DEPENDENCIES": "true",
 		},
 		"rewrite with provenance": {
-			"OCIFY_REWRITE_DEPENDENCIES": "true",
-			"OCIFY_EXTERNAL_HOST":        "ocify.example.com",
-			"OCIFY_PROVENANCE_ENABLED":   "true",
+			"OCHARTED_REWRITE_DEPENDENCIES": "true",
+			"OCHARTED_EXTERNAL_HOST":        "ocharted.example.com",
+			"OCHARTED_PROVENANCE_ENABLED":   "true",
 		},
 		"external host with scheme": {
-			"OCIFY_EXTERNAL_HOST": "https://ocify.example.com",
+			"OCHARTED_EXTERNAL_HOST": "https://ocharted.example.com",
 		},
 	}
 	for name, envs := range cases {

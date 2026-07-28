@@ -6,7 +6,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/home-operations/ocify/internal/upstream"
+	"github.com/home-operations/ocharted/internal/upstream"
 )
 
 // ociError is one element of the OCI distribution spec's error response body.

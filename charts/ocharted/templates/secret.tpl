@@ -1,11 +1,11 @@
-{{- if include "ocify.managedAuthSecret" . }}
+{{- if include "ocharted.managedAuthSecret" . }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ include "ocify.fullname" . }}
+  name: {{ include "ocharted.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "ocify.labels" . | nindent 4 }}
+    {{- include "ocharted.labels" . | nindent 4 }}
 type: Opaque
 stringData:
   auth: {{ .Values.auth.users | quote }}

@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/home-operations/ocify/internal/testchart"
+	"github.com/home-operations/ocharted/internal/testchart"
 )
 
 func testOptions() Options {
@@ -23,7 +23,7 @@ func testOptions() Options {
 		MaxIndexBytes: 1 << 20,
 		MaxChartBytes: 1 << 20,
 		AllowPrivate:  true,
-		UserAgent:     "ocify-test",
+		UserAgent:     "ocharted-test",
 	}
 }
 

@@ -115,7 +115,7 @@ jobs:
         with:
           version: v0.30.0
           node_image: kindest/node:v1.34.0
-          cluster_name: ocify-helm-e2e
+          cluster_name: ocharted-helm-e2e
           wait: 60s
 
       - name: Set up Buildx
@@ -125,12 +125,12 @@ jobs:
         id: tools
         run: echo "go=$(mise config get tools.go)" >> "$GITHUB_OUTPUT"
 
-      - name: Build ocify image
+      - name: Build ocharted image
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
           load: true
-          tags: ghcr.io/home-operations/ocify:e2e
+          tags: ghcr.io/home-operations/ocharted:e2e
           build-args: |
             GO_VERSION=${{ steps.tools.outputs.go }}
           cache-from: type=gha
@@ -141,13 +141,13 @@ jobs:
           kubectl version
           kubectl get nodes
 
-      - name: Load ocify image into kind
-        run: kind load docker-image ghcr.io/home-operations/ocify:e2e --name ocify-helm-e2e
+      - name: Load ocharted image into kind
+        run: kind load docker-image ghcr.io/home-operations/ocharted:e2e --name ocharted-helm-e2e
 
       - name: Helm install + test
         env:
-          OCIFY_TEST_IMAGE_TAG: e2e
-          OCIFY_TEST_PULL_POLICY: Never
+          OCHARTED_TEST_IMAGE_TAG: e2e
+          OCHARTED_TEST_PULL_POLICY: Never
         run: |
           export KUBECONFIG="${HOME}/.kube/config"
           mise run helm-test
@@ -179,7 +179,7 @@ jobs:
         with:
           version: v0.30.0
           node_image: kindest/node:v1.34.0
-          cluster_name: ocify-flux-e2e
+          cluster_name: ocharted-flux-e2e
           wait: 60s
 
       - name: Set up Buildx
@@ -189,24 +189,24 @@ jobs:
         id: tools
         run: echo "go=$(mise config get tools.go)" >> "$GITHUB_OUTPUT"
 
-      - name: Build ocify image
+      - name: Build ocharted image
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
           load: true
-          tags: ghcr.io/home-operations/ocify:e2e
+          tags: ghcr.io/home-operations/ocharted:e2e
           build-args: |
             GO_VERSION=${{ steps.tools.outputs.go }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Load ocify image into kind
-        run: kind load docker-image ghcr.io/home-operations/ocify:e2e --name ocify-flux-e2e
+      - name: Load ocharted image into kind
+        run: kind load docker-image ghcr.io/home-operations/ocharted:e2e --name ocharted-flux-e2e
 
       - name: Flux e2e
         env:
-          OCIFY_TEST_IMAGE_TAG: e2e
-          OCIFY_TEST_PULL_POLICY: Never
+          OCHARTED_TEST_IMAGE_TAG: e2e
+          OCHARTED_TEST_PULL_POLICY: Never
         run: |
           export KUBECONFIG="${HOME}/.kube/config"
           mise run flux-e2e

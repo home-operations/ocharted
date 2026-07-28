@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/home-operations/ocify/internal/oci"
+	"github.com/home-operations/ocharted/internal/oci"
 )
 
 // immutableCacheControl marks by-digest responses, which can never change for
@@ -38,7 +38,7 @@ func (s *Server) handler() http.Handler {
 	mux.Handle("/v2/", s.basicAuth(http.HandlerFunc(s.handleV2)))
 	// The org pair standard: /healthz = liveness, /readyz = readiness, both on
 	// the main port so the optional metrics listener can be disabled without
-	// touching the probes. ocify has no serving condition beyond being up
+	// touching the probes. ocharted has no serving condition beyond being up
 	// (upstreams are per-request dependencies), so readyz aliases healthz.
 	mux.HandleFunc("GET /healthz", handleHealth)
 	mux.HandleFunc("GET /readyz", handleHealth)

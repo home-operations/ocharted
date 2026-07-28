@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "ocify.fullname" . }}
+  name: {{ include "ocharted.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "ocify.labels" . | nindent 4 }}
+    {{- include "ocharted.labels" . | nindent 4 }}
   {{- with .Values.deploymentAnnotations }}
   # Workload-level annotations — e.g. reloader.stakater.com/auto, which must sit
   # on the Deployment (not the pod) to roll it when a referenced object changes.
@@ -19,17 +19,17 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "ocify.selectorLabels" . | nindent 6 }}
+      {{- include "ocharted.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "ocify.labels" . | nindent 8 }}
+        {{- include "ocharted.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- tpl (toYaml .) $ | nindent 8 }}
         {{- end }}
-      {{- if or (include "ocify.managedAuthSecret" .) .Values.podAnnotations }}
+      {{- if or (include "ocharted.managedAuthSecret" .) .Values.podAnnotations }}
       annotations:
-        {{- if include "ocify.managedAuthSecret" . }}
+        {{- if include "ocharted.managedAuthSecret" . }}
         # Roll the pod when the chart-managed auth Secret changes (no-op for an
         # existingSecret — use Reloader via deploymentAnnotations there).
         checksum/secret: {{ include (print $.Template.BasePath "/secret.tpl") . | sha256sum }}
@@ -43,7 +43,7 @@ spec:
       imagePullSecrets:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "ocify.serviceAccountName" . }}
+      serviceAccountName: {{ include "ocharted.serviceAccountName" . }}
       automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
       {{- with .Values.priorityClassName }}
       priorityClassName: {{ tpl . $ | quote }}
@@ -56,63 +56,63 @@ spec:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
       containers:
-        - name: ocify
-          image: {{ include "ocify.image" . | quote }}
+        - name: ocharted
+          image: {{ include "ocharted.image" . | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
             {{- tpl (toYaml .Values.securityContext) $ | nindent 12 }}
           env:
-            - name: OCIFY_PORT
+            - name: OCHARTED_PORT
               value: {{ .Values.config.port | quote }}
-            - name: OCIFY_METRICS_ENABLED
+            - name: OCHARTED_METRICS_ENABLED
               value: {{ .Values.config.metricsEnabled | quote }}
-            - name: OCIFY_METRICS_PORT
+            - name: OCHARTED_METRICS_PORT
               value: {{ .Values.config.metricsPort | quote }}
-            - name: OCIFY_LOG_LEVEL
+            - name: OCHARTED_LOG_LEVEL
               value: {{ .Values.config.logLevel | quote }}
-            - name: OCIFY_LOG_FORMAT
+            - name: OCHARTED_LOG_FORMAT
               value: {{ .Values.config.logFormat | quote }}
-            - name: OCIFY_INDEX_TTL
+            - name: OCHARTED_INDEX_TTL
               value: {{ .Values.config.indexTTL | quote }}
-            - name: OCIFY_INDEX_STALE_TTL
+            - name: OCHARTED_INDEX_STALE_TTL
               value: {{ .Values.config.indexStaleTTL | quote }}
-            - name: OCIFY_CACHE_MAX_BYTES
+            - name: OCHARTED_CACHE_MAX_BYTES
               value: {{ .Values.config.cacheMaxBytes | int64 | quote }}
-            - name: OCIFY_MAX_INDEX_BYTES
+            - name: OCHARTED_MAX_INDEX_BYTES
               value: {{ .Values.config.maxIndexBytes | int64 | quote }}
-            - name: OCIFY_MAX_CHART_BYTES
+            - name: OCHARTED_MAX_CHART_BYTES
               value: {{ .Values.config.maxChartBytes | int64 | quote }}
-            - name: OCIFY_UPSTREAM_TIMEOUT
+            - name: OCHARTED_UPSTREAM_TIMEOUT
               value: {{ .Values.config.upstreamTimeout | quote }}
             {{- with .Values.config.upstreamAllowlist }}
-            - name: OCIFY_UPSTREAM_ALLOWLIST
+            - name: OCHARTED_UPSTREAM_ALLOWLIST
               value: {{ join "," . | quote }}
             {{- end }}
-            - name: OCIFY_ALLOW_PRIVATE_UPSTREAMS
+            - name: OCHARTED_ALLOW_PRIVATE_UPSTREAMS
               value: {{ .Values.config.allowPrivateUpstreams | quote }}
-            - name: OCIFY_PROVENANCE_ENABLED
+            - name: OCHARTED_PROVENANCE_ENABLED
               value: {{ .Values.config.provenanceEnabled | quote }}
-            - name: OCIFY_RESOLVE_SCAN_LIMIT
+            - name: OCHARTED_RESOLVE_SCAN_LIMIT
               value: {{ .Values.config.resolveScanLimit | quote }}
-            - name: OCIFY_DISABLE_REQUEST_LOGS
+            - name: OCHARTED_DISABLE_REQUEST_LOGS
               value: {{ .Values.config.disableRequestLogs | quote }}
-            - name: OCIFY_SHUTDOWN_TIMEOUT
+            - name: OCHARTED_SHUTDOWN_TIMEOUT
               value: {{ .Values.config.shutdownTimeout | quote }}
             {{- if or .Values.auth.users .Values.auth.existingSecret }}
-            - name: OCIFY_AUTH
+            - name: OCHARTED_AUTH
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.auth.existingSecret | default (include "ocify.fullname" .) }}
+                  name: {{ .Values.auth.existingSecret | default (include "ocharted.fullname" .) }}
                   key: {{ if .Values.auth.existingSecret }}{{ .Values.auth.existingSecretKey }}{{ else }}auth{{ end }}
             {{- end }}
             {{- if .Values.signing.existingSecret }}
-            - name: OCIFY_SIGNING_KEY_PATH
-              value: /etc/ocify/signing/{{ .Values.signing.existingSecretKey }}
+            - name: OCHARTED_SIGNING_KEY_PATH
+              value: /etc/ocharted/signing/{{ .Values.signing.existingSecretKey }}
             {{- end }}
             {{- if .Values.config.rewriteDependencies }}
-            - name: OCIFY_REWRITE_DEPENDENCIES
+            - name: OCHARTED_REWRITE_DEPENDENCIES
               value: "true"
-            - name: OCIFY_EXTERNAL_HOST
+            - name: OCHARTED_EXTERNAL_HOST
               value: {{ required "config.externalHost is required when config.rewriteDependencies is enabled" .Values.config.externalHost | quote }}
             {{- end }}
             {{- range $k, $v := .Values.env }}
@@ -155,7 +155,7 @@ spec:
           volumeMounts:
             {{- if .Values.signing.existingSecret }}
             - name: signing-key
-              mountPath: /etc/ocify/signing
+              mountPath: /etc/ocharted/signing
               readOnly: true
             {{- end }}
             {{- with .Values.volumeMounts }}

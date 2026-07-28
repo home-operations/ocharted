@@ -1,6 +1,6 @@
 ---
 apiVersion: v2
-name: ocify
+name: ocharted
 description: A stateless OCI registry proxy that serves classic Helm repositories as OCI artifacts — point Flux OCIRepositories or `helm install oci://` at any HTTP Helm repo with no onboarding
 type: application
 kubeVersion: ">=1.25.0-0"
@@ -9,14 +9,14 @@ kubeVersion: ">=1.25.0-0"
 # keeps it from going stale.
 version: 0.1.0 # x-release-please-version
 appVersion: "0.1.0" # x-release-please-version
-home: https://github.com/home-operations/ocify
+home: https://github.com/home-operations/ocharted
 sources:
-  - https://github.com/home-operations/ocify
+  - https://github.com/home-operations/ocharted
 maintainers:
   - name: home-operations
     email: contact@home-operations.com
 keywords:
-  - ocify
+  - ocharted
   - helm
   - oci
   - registry

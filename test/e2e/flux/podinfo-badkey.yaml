@@ -12,8 +12,8 @@ spec:
     operation: copy
   ref:
     semver: ">=6.0.0"
-  url: oci://ocify.ocify-e2e.svc.cluster.local:8080/stefanprodan.github.io/podinfo/podinfo
-  # Verification against a key ocify does NOT sign with — must never become
+  url: oci://ocharted.ocharted-e2e.svc.cluster.local:8080/stefanprodan.github.io/podinfo/podinfo
+  # Verification against a key ocharted does NOT sign with — must never become
   # Ready. This is the admission-gate property the whole signing feature
   # exists to provide.
   verify:

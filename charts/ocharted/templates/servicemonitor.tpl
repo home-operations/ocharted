@@ -2,10 +2,10 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ include "ocify.fullname" . }}
+  name: {{ include "ocharted.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "ocify.labels" . | nindent 4 }}
+    {{- include "ocharted.labels" . | nindent 4 }}
     {{- with .Values.monitoring.serviceMonitor.labels }}
     {{- tpl (toYaml .) $ | nindent 4 }}
     {{- end }}
@@ -16,7 +16,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      {{- include "ocify.selectorLabels" . | nindent 6 }}
+      {{- include "ocharted.selectorLabels" . | nindent 6 }}
   endpoints:
     # Scrapes the dedicated metrics port; requires config.metricsEnabled.
     - port: metrics

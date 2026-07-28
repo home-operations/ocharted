@@ -1,14 +1,14 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "ocify.name" -}}
+{{- define "ocharted.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Create a default fully qualified app name (truncated to the 63-char DNS limit).
 */}}
-{{- define "ocify.fullname" -}}
+{{- define "ocharted.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -24,16 +24,16 @@ Create a default fully qualified app name (truncated to the 63-char DNS limit).
 {{/*
 Chart name and version as used by the chart label.
 */}}
-{{- define "ocify.chart" -}}
+{{- define "ocharted.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "ocify.labels" -}}
-helm.sh/chart: {{ include "ocify.chart" . }}
-{{ include "ocify.selectorLabels" . }}
+{{- define "ocharted.labels" -}}
+helm.sh/chart: {{ include "ocharted.chart" . }}
+{{ include "ocharted.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -43,17 +43,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "ocify.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "ocify.name" . }}
+{{- define "ocharted.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "ocharted.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Service account name to use.
 */}}
-{{- define "ocify.serviceAccountName" -}}
+{{- define "ocharted.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "ocify.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "ocharted.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
@@ -63,7 +63,7 @@ Service account name to use.
 Image reference: a digest pin wins, otherwise repository:tag, defaulting the tag
 to the chart appVersion. The release pipeline pins the digest at publish time.
 */}}
-{{- define "ocify.image" -}}
+{{- define "ocharted.image" -}}
 {{- $repo := .Values.image.repository -}}
 {{- if .Values.image.digest -}}
 {{- printf "%s@%s" $repo .Values.image.digest -}}
@@ -76,7 +76,7 @@ to the chart appVersion. The release pipeline pins the digest at publish time.
 Image for the `helm test` connection pod. tests.image.tag is pinned as
 `tag@sha256:digest`, so this yields repository:tag@digest.
 */}}
-{{- define "ocify.testImage" -}}
+{{- define "ocharted.testImage" -}}
 {{- $img := .Values.tests.image -}}
 {{- printf "%s:%s" $img.repository $img.tag -}}
 {{- end }}
@@ -85,6 +85,6 @@ Image for the `helm test` connection pod. tests.image.tag is pinned as
 Whether the chart manages the auth Secret itself (auth.users set, no
 existingSecret supplied).
 */}}
-{{- define "ocify.managedAuthSecret" -}}
+{{- define "ocharted.managedAuthSecret" -}}
 {{- if and .Values.auth.users (not .Values.auth.existingSecret) }}true{{- end }}
 {{- end }}

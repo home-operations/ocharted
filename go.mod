@@ -1,4 +1,4 @@
-module github.com/home-operations/ocify
+module github.com/home-operations/ocharted
 
 go 1.26.5
 

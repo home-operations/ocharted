@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "ocify.fullname" . }}
+  name: {{ include "ocharted.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "ocify.labels" . | nindent 4 }}
+    {{- include "ocharted.labels" . | nindent 4 }}
   {{- with .Values.service.annotations }}
   annotations:
     {{- tpl (toYaml .) $ | nindent 4 }}
@@ -15,7 +15,7 @@ spec:
   externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy }}
   {{- end }}
   selector:
-    {{- include "ocify.selectorLabels" . | nindent 4 }}
+    {{- include "ocharted.selectorLabels" . | nindent 4 }}
   ports:
     - name: http
       port: {{ .Values.service.port }}

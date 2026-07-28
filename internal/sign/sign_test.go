@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/home-operations/ocify/internal/oci"
+	"github.com/home-operations/ocharted/internal/oci"
 )
 
 func testKeyPEM(t *testing.T) ([]byte, ed25519.PublicKey) {
@@ -50,7 +50,7 @@ func TestArtifactDeterministicAndVerifiable(t *testing.T) {
 		t.Fatalf("Load: %v", err)
 	}
 
-	ref := "ocify.example.com/charts.jetstack.io/cert-manager"
+	ref := "ocharted.example.com/charts.jetstack.io/cert-manager"
 	target := "sha256:" + strings.Repeat("ab", 32)
 
 	a, err := signer.Artifact(ref, target)

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/home-operations/ocify/internal/testchart"
+	"github.com/home-operations/ocharted/internal/testchart"
 	"go.yaml.in/yaml/v4"
 )
 
@@ -78,7 +78,7 @@ func TestRewriteDependencies(t *testing.T) {
 		"values.yaml": "replicas: 1\n",
 	})
 
-	out, err := RewriteDependencies(chart, "ocify.example.com")
+	out, err := RewriteDependencies(chart, "ocharted.example.com")
 	if err != nil {
 		t.Fatalf("RewriteDependencies: %v", err)
 	}
@@ -88,11 +88,11 @@ func TestRewriteDependencies(t *testing.T) {
 
 	repos := depRepos(t, chartYAMLFrom(t, out))
 	want := map[string]string{
-		"redis":       "oci://ocify.example.com/charts.bitnami.com/bitnami",
+		"redis":       "oci://ocharted.example.com/charts.bitnami.com/bitnami",
 		"local":       "file://../local",
 		"aliased":     "@myrepo",
 		"already-oci": "oci://ghcr.io/example/charts",
-		"plain-http":  "oci://ocify.example.com/charts.internal.example/stable",
+		"plain-http":  "oci://ocharted.example.com/charts.internal.example/stable",
 	}
 	for name, repo := range want {
 		if repos[name] != repo {
@@ -116,11 +116,11 @@ func TestRewriteDependencies(t *testing.T) {
 
 func TestRewriteDependenciesDeterministic(t *testing.T) {
 	chart := testchart.Tgz("umbrella", depsChartYAML, nil)
-	a, err := RewriteDependencies(chart, "ocify.example.com")
+	a, err := RewriteDependencies(chart, "ocharted.example.com")
 	if err != nil {
 		t.Fatalf("rewrite: %v", err)
 	}
-	b, err := RewriteDependencies(chart, "ocify.example.com")
+	b, err := RewriteDependencies(chart, "ocharted.example.com")
 	if err != nil {
 		t.Fatalf("rewrite (second): %v", err)
 	}
@@ -136,7 +136,7 @@ func TestRewriteDependenciesNoopKeepsBytes(t *testing.T) {
 	// A chart without HTTP dependencies must come back byte-identical, so
 	// digest fidelity to upstream is preserved whenever possible.
 	plain := testchart.Tgz("demo", testchart.ChartYAML("demo", "1.2.3"), nil)
-	out, err := RewriteDependencies(plain, "ocify.example.com")
+	out, err := RewriteDependencies(plain, "ocharted.example.com")
 	if err != nil {
 		t.Fatalf("rewrite: %v", err)
 	}
@@ -152,7 +152,7 @@ dependencies:
     version: 1.0.0
     repository: oci://ghcr.io/example/charts
 `, nil)
-	out, err = RewriteDependencies(ociOnly, "ocify.example.com")
+	out, err = RewriteDependencies(ociOnly, "ocharted.example.com")
 	if err != nil {
 		t.Fatalf("rewrite: %v", err)
 	}

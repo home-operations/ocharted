@@ -12,12 +12,12 @@ import (
 
 var (
 	httpRequests = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "ocify_http_requests_total",
+		Name: "ocharted_http_requests_total",
 		Help: "Total number of inbound HTTP requests handled, by method and status class.",
 	}, []string{"method", "status"})
 
 	httpDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "ocify_http_request_duration_seconds",
+		Name:    "ocharted_http_request_duration_seconds",
 		Help:    "Inbound HTTP request duration in seconds, by method.",
 		Buckets: prometheus.DefBuckets,
 	}, []string{"method"})
@@ -25,22 +25,22 @@ var (
 	// artifactBuilds counts full chart derivations (download + package): the
 	// real upstream work. Compare against cache events to judge TTL tuning.
 	artifactBuilds = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "ocify_artifact_builds_total",
+		Name: "ocharted_artifact_builds_total",
 		Help: "Chart artifacts derived from upstream (tarball download + OCI packaging).",
 	})
 
 	cacheEvents = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "ocify_artifact_cache_events_total",
+		Name: "ocharted_artifact_cache_events_total",
 		Help: "Derived-artifact cache activity, by event (hit/miss/evict).",
 	}, []string{"event"})
 
 	buildInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "ocify_build_info",
+		Name: "ocharted_build_info",
 		Help: "Build metadata; the value is always 1, the version/commit/goversion are labels.",
 	}, []string{"version", "commit", "goversion"})
 )
 
-// RecordBuildInfo sets the ocify_build_info gauge from the stamped build
+// RecordBuildInfo sets the ocharted_build_info gauge from the stamped build
 // vars, so the running build is queryable from Prometheus, not just the boot
 // log.
 func RecordBuildInfo(version, commit string) {

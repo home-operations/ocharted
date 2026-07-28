@@ -13,8 +13,8 @@
       "include-v-in-release-name": false,
       "always-update": true,
       "extra-files": [
-        { "type": "generic", "path": "charts/ocify/Chart.yaml" },
-        "charts/ocify/README.md"
+        { "type": "generic", "path": "charts/ocharted/Chart.yaml" },
+        "charts/ocharted/README.md"
       ]
     }
   },

@@ -1,6 +1,6 @@
-// Command ocify runs a stateless OCI registry proxy for classic Helm
+// Command ocharted runs a stateless OCI registry proxy for classic Helm
 // repositories: any chart in any HTTP Helm repo becomes pullable as an OCI
-// artifact (oci://<ocify-host>/<upstream-host[/path]>/<chart>) with no
+// artifact (oci://<ocharted-host>/<upstream-host[/path]>/<chart>) with no
 // onboarding, no storage, and no publish step. Every response is derived on
 // demand from upstream, deterministically, so replicas need no coordination.
 package main
@@ -17,10 +17,10 @@ import (
 	"syscall"
 
 	"github.com/KimMachineGun/automemlimit/memlimit"
-	"github.com/home-operations/ocify/internal/config"
-	"github.com/home-operations/ocify/internal/registry"
-	"github.com/home-operations/ocify/internal/sign"
-	"github.com/home-operations/ocify/internal/upstream"
+	"github.com/home-operations/ocharted/internal/config"
+	"github.com/home-operations/ocharted/internal/registry"
+	"github.com/home-operations/ocharted/internal/sign"
+	"github.com/home-operations/ocharted/internal/upstream"
 	"github.com/spf13/cobra"
 )
 
@@ -32,18 +32,18 @@ var (
 
 func main() {
 	if err := newRootCmd().Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, "ocify:", err)
+		fmt.Fprintln(os.Stderr, "ocharted:", err)
 		os.Exit(1)
 	}
 }
 
-// newRootCmd wires the CLI: bare `ocify` runs the server (the container
+// newRootCmd wires the CLI: bare `ocharted` runs the server (the container
 // entrypoint).
 func newRootCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "ocify",
+		Use:   "ocharted",
 		Short: "A stateless OCI registry proxy for classic Helm repositories",
-		Long: "ocify serves any HTTP Helm repository as a read-only OCI registry, packaging charts\n" +
+		Long: "ocharted serves any HTTP Helm repository as a read-only OCI registry, packaging charts\n" +
 			"on demand so Flux OCIRepositories and `helm install oci://` work without the upstream\n" +
 			"publishing OCI artifacts. With no subcommand it runs the server.",
 		Version:       fmt.Sprintf("%s (commit %s)", version, commit),
@@ -90,13 +90,13 @@ func run() error {
 		MaxChartBytes: cfg.MaxChartBytes,
 		AllowPrivate:  cfg.AllowPrivateUpstreams,
 		AllowedHosts:  cfg.UpstreamAllowlist,
-		UserAgent:     "ocify/" + version,
+		UserAgent:     "ocharted/" + version,
 	})
 	var signer *sign.Signer
 	if cfg.SigningKeyPath != "" {
 		keyPEM, err := os.ReadFile(cfg.SigningKeyPath)
 		if err != nil {
-			return fmt.Errorf("read OCIFY_SIGNING_KEY_PATH: %w", err)
+			return fmt.Errorf("read OCHARTED_SIGNING_KEY_PATH: %w", err)
 		}
 		if signer, err = sign.Load(keyPEM); err != nil {
 			return err
@@ -118,15 +118,15 @@ func run() error {
 		// Anonymous mode is a fine default for cluster-internal deployments;
 		// note it at info level so an accidental public anonymous deployment is
 		// at least visible in the boot log.
-		logger.Info("registry auth disabled (no OCIFY_AUTH); serving anonymously")
+		logger.Info("registry auth disabled (no OCHARTED_AUTH); serving anonymously")
 	}
 	if len(cfg.UpstreamAllowlist) == 0 {
-		logger.Info("no OCIFY_UPSTREAM_ALLOWLIST; any public upstream host may be proxied")
+		logger.Info("no OCHARTED_UPSTREAM_ALLOWLIST; any public upstream host may be proxied")
 	}
 
 	registry.RecordBuildInfo(version, commit)
 
-	logger.Info("starting ocify",
+	logger.Info("starting ocharted",
 		"version", version,
 		"commit", commit,
 		"http_port", cfg.Port,

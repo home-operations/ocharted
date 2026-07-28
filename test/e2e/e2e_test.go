@@ -1,6 +1,6 @@
 //go:build e2e
 
-// Package e2e exercises ocify with the real helm and cosign CLIs against a
+// Package e2e exercises ocharted with the real helm and cosign CLIs against a
 // real public upstream (charts.jetstack.io). It needs network access and both
 // binaries on PATH — run it via `mise run test-e2e`; regular `go test ./...`
 // never builds it (the e2e tag).
@@ -23,10 +23,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/home-operations/ocify/internal/config"
-	"github.com/home-operations/ocify/internal/registry"
-	"github.com/home-operations/ocify/internal/sign"
-	"github.com/home-operations/ocify/internal/upstream"
+	"github.com/home-operations/ocharted/internal/config"
+	"github.com/home-operations/ocharted/internal/registry"
+	"github.com/home-operations/ocharted/internal/sign"
+	"github.com/home-operations/ocharted/internal/upstream"
 )
 
 const (
@@ -37,7 +37,7 @@ const (
 
 // startProxy runs the registry handler on a loopback listener with a real
 // (guarded, no transport override) upstream client — the same wiring as
-// cmd/ocify, minus the process shell.
+// cmd/ocharted, minus the process shell.
 func startProxy(t *testing.T, signer *sign.Signer, rewriteHost string) *httptest.Server {
 	t.Helper()
 	cfg, err := config.Load()
@@ -50,7 +50,7 @@ func startProxy(t *testing.T, signer *sign.Signer, rewriteHost string) *httptest
 		IndexStaleTTL: cfg.IndexStaleTTL,
 		MaxIndexBytes: cfg.MaxIndexBytes,
 		MaxChartBytes: cfg.MaxChartBytes,
-		UserAgent:     "ocify-e2e",
+		UserAgent:     "ocharted-e2e",
 	})
 	res := registry.NewResolver(up, registry.ResolverOptions{
 		Provenance:  cfg.ProvenanceEnabled,
@@ -82,7 +82,7 @@ func run(t *testing.T, dir string, name string, args ...string) string {
 	return string(out)
 }
 
-// TestHelmPullThroughProxy pulls a real chart through ocify with the helm CLI
+// TestHelmPullThroughProxy pulls a real chart through ocharted with the helm CLI
 // and checks the tarball is byte-identical to what upstream published.
 func TestHelmPullThroughProxy(t *testing.T) {
 	requireTool(t, "helm")
@@ -103,7 +103,7 @@ func TestHelmPullThroughProxy(t *testing.T) {
 	// hash to the digest the upstream index publishes for this version.
 	up := upstream.New(upstream.Options{
 		Timeout: 30 * time.Second, IndexTTL: time.Minute,
-		MaxIndexBytes: 64 << 20, MaxChartBytes: 32 << 20, UserAgent: "ocify-e2e",
+		MaxIndexBytes: 64 << 20, MaxChartBytes: 32 << 20, UserAgent: "ocharted-e2e",
 	})
 	idx, err := up.Index(t.Context(), upstreamRepo)
 	if err != nil {
@@ -172,7 +172,7 @@ func TestDependencyRewriteThroughProxy(t *testing.T) {
 		depsVersion = "65.0.0"
 	)
 
-	srv := startProxy(t, nil, "ocify.example.com")
+	srv := startProxy(t, nil, "ocharted.example.com")
 	host := strings.TrimPrefix(srv.URL, "http://")
 	dir := t.TempDir()
 
@@ -184,7 +184,7 @@ func TestDependencyRewriteThroughProxy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unpacked Chart.yaml missing: %v", err)
 	}
-	if !strings.Contains(string(raw), "oci://ocify.example.com/grafana.github.io/helm-charts") {
+	if !strings.Contains(string(raw), "oci://ocharted.example.com/grafana.github.io/helm-charts") {
 		t.Fatalf("dependencies not rewritten through the proxy:\n%s", raw)
 	}
 	if strings.Contains(string(raw), "repository: https://") {

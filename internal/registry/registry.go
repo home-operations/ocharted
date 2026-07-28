@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/home-operations/ocify/internal/config"
+	"github.com/home-operations/ocharted/internal/config"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -26,7 +26,7 @@ const (
 	idleTimeout       = 120 * time.Second
 )
 
-// newHTTPServer builds an http.Server with ocify's standard connection
+// newHTTPServer builds an http.Server with ocharted's standard connection
 // timeouts.
 func newHTTPServer(addr string, handler http.Handler) *http.Server {
 	return &http.Server{

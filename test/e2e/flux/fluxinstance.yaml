@@ -9,7 +9,7 @@ spec:
     version: 2.x
     registry: ghcr.io/fluxcd
   # Only the two controllers the e2e exercises: source-controller pulls the
-  # chart through ocify (and cosign-verifies it), helm-controller installs it.
+  # chart through ocharted (and cosign-verifies it), helm-controller installs it.
   components:
     - source-controller
     - helm-controller

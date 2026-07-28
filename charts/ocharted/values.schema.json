@@ -8,11 +8,11 @@
       "type": "object"
     },
     "auth": {
-      "description": "Registry authentication, delivered as OCIFY_AUTH from a Secret. When neither\nfield is set the registry is anonymous — fine for cluster-internal\ndeployments; set one for anything exposed.",
+      "description": "Registry authentication, delivered as OCHARTED_AUTH from a Secret. When neither\nfield is set the registry is anonymous — fine for cluster-internal\ndeployments; set one for anything exposed.",
       "properties": {
         "existingSecret": {
           "default": "",
-          "description": "Use this existing Secret for OCIFY_AUTH instead of rendering one.",
+          "description": "Use this existing Secret for OCHARTED_AUTH instead of rendering one.",
           "title": "existingSecret",
           "type": "string"
         },
@@ -24,7 +24,7 @@
         },
         "users": {
           "default": "",
-          "description": "Basic-auth users as a `user:password,user2:password2` list (OCIFY_AUTH). If set, it is rendered into a chart-managed Secret. Leave empty and use `existingSecret` to supply it from your own (e.g. SOPS/sealed) Secret.",
+          "description": "Basic-auth users as a `user:password,user2:password2` list (OCHARTED_AUTH). If set, it is rendered into a chart-managed Secret. Leave empty and use `existingSecret` to supply it from your own (e.g. SOPS/sealed) Secret.",
           "title": "users",
           "type": "string"
         }
@@ -34,112 +34,112 @@
       "type": "object"
     },
     "config": {
-      "description": "The proxy's configuration; every field maps to an OCIFY_* env var.",
+      "description": "The proxy's configuration; every field maps to an OCHARTED_* env var.",
       "properties": {
         "allowPrivateUpstreams": {
           "default": false,
-          "description": "Permit upstreams that resolve to private addresses (OCIFY_ALLOW_PRIVATE_UPSTREAMS), e.g. an in-cluster ChartMuseum. Leave off otherwise.",
+          "description": "Permit upstreams that resolve to private addresses (OCHARTED_ALLOW_PRIVATE_UPSTREAMS), e.g. an in-cluster ChartMuseum. Leave off otherwise.",
           "title": "allowPrivateUpstreams",
           "type": "boolean"
         },
         "cacheMaxBytes": {
           "default": 268435456,
-          "description": "In-memory derived-artifact cache bound in bytes (OCIFY_CACHE_MAX_BYTES). Purely a latency/upstream-traffic optimization; size resources.limits.memory above it with headroom.",
+          "description": "In-memory derived-artifact cache bound in bytes (OCHARTED_CACHE_MAX_BYTES). Purely a latency/upstream-traffic optimization; size resources.limits.memory above it with headroom.",
           "title": "cacheMaxBytes",
           "type": "integer"
         },
         "disableRequestLogs": {
           "default": false,
-          "description": "Silence the per-request access log (OCIFY_DISABLE_REQUEST_LOGS).",
+          "description": "Silence the per-request access log (OCHARTED_DISABLE_REQUEST_LOGS).",
           "title": "disableRequestLogs",
           "type": "boolean"
         },
         "externalHost": {
           "default": "",
-          "description": "Canonical client-facing hostname written into rewritten dependency URLs (OCIFY_EXTERNAL_HOST). Host only — no scheme, no path. Static so rewritten bytes are identical no matter which hostname a client used.",
+          "description": "Canonical client-facing hostname written into rewritten dependency URLs (OCHARTED_EXTERNAL_HOST). Host only — no scheme, no path. Static so rewritten bytes are identical no matter which hostname a client used.",
           "title": "externalHost",
           "type": "string"
         },
         "indexStaleTTL": {
           "default": "24h",
-          "description": "Stale-if-error bound (OCIFY_INDEX_STALE_TTL): when re-fetching an expired index fails (network fault, upstream 5xx), the cached copy is served up to this age, so upstream outages delay freshness instead of failing Flux reconciles. Authoritative answers (404, allowlist rejection) are never masked. \"0\" disables.",
+          "description": "Stale-if-error bound (OCHARTED_INDEX_STALE_TTL): when re-fetching an expired index fails (network fault, upstream 5xx), the cached copy is served up to this age, so upstream outages delay freshness instead of failing Flux reconciles. Authoritative answers (404, allowlist rejection) are never masked. \"0\" disables.",
           "title": "indexStaleTTL",
           "type": "string"
         },
         "indexTTL": {
           "default": "5m",
-          "description": "Upstream index.yaml cache TTL (OCIFY_INDEX_TTL) — how fast new chart versions appear, and how often upstreams are re-fetched.",
+          "description": "Upstream index.yaml cache TTL (OCHARTED_INDEX_TTL) — how fast new chart versions appear, and how often upstreams are re-fetched.",
           "title": "indexTTL",
           "type": "string"
         },
         "logFormat": {
           "default": "json",
-          "description": "Log format (OCIFY_LOG_FORMAT): json or text.",
+          "description": "Log format (OCHARTED_LOG_FORMAT): json or text.",
           "title": "logFormat",
           "type": "string"
         },
         "logLevel": {
           "default": "info",
-          "description": "Log level (OCIFY_LOG_LEVEL): debug, info, warn, or error.",
+          "description": "Log level (OCHARTED_LOG_LEVEL): debug, info, warn, or error.",
           "title": "logLevel",
           "type": "string"
         },
         "maxChartBytes": {
           "default": 33554432,
-          "description": "Upstream chart tarball size cap in bytes (OCIFY_MAX_CHART_BYTES).",
+          "description": "Upstream chart tarball size cap in bytes (OCHARTED_MAX_CHART_BYTES).",
           "title": "maxChartBytes",
           "type": "integer"
         },
         "maxIndexBytes": {
           "default": 67108864,
-          "description": "Upstream index.yaml size cap in bytes (OCIFY_MAX_INDEX_BYTES); generous because real indexes get big (Bitnami's is tens of MB).",
+          "description": "Upstream index.yaml size cap in bytes (OCHARTED_MAX_INDEX_BYTES); generous because real indexes get big (Bitnami's is tens of MB).",
           "title": "maxIndexBytes",
           "type": "integer"
         },
         "metricsEnabled": {
           "default": true,
-          "description": "Expose Prometheus metrics at /metrics on metricsPort (OCIFY_METRICS_ENABLED). Disabling removes the metrics listener, container port, Service port, and ServiceMonitor entirely; health probes are unaffected (they target the http port).",
+          "description": "Expose Prometheus metrics at /metrics on metricsPort (OCHARTED_METRICS_ENABLED). Disabling removes the metrics listener, container port, Service port, and ServiceMonitor entirely; health probes are unaffected (they target the http port).",
           "title": "metricsEnabled",
           "type": "boolean"
         },
         "metricsPort": {
           "default": 8081,
-          "description": "Metrics listen port (OCIFY_METRICS_PORT), kept off the public registry port.",
+          "description": "Metrics listen port (OCHARTED_METRICS_PORT), kept off the public registry port.",
           "title": "metricsPort",
           "type": "integer"
         },
         "port": {
           "default": 8080,
-          "description": "Registry API port (OCIFY_PORT): /v2/, /healthz, /readyz; also the container/Service http port.",
+          "description": "Registry API port (OCHARTED_PORT): /v2/, /healthz, /readyz; also the container/Service http port.",
           "title": "port",
           "type": "integer"
         },
         "provenanceEnabled": {
           "default": false,
-          "description": "Fetch each chart's .prov file and attach it as the Helm provenance layer when upstream publishes one (OCIFY_PROVENANCE_ENABLED). Adds one upstream request per chart build.",
+          "description": "Fetch each chart's .prov file and attach it as the Helm provenance layer when upstream publishes one (OCHARTED_PROVENANCE_ENABLED). Adds one upstream request per chart build.",
           "title": "provenanceEnabled",
           "type": "boolean"
         },
         "resolveScanLimit": {
           "default": 25,
-          "description": "Max candidate versions a cold by-digest lookup derives before giving up (OCIFY_RESOLVE_SCAN_LIMIT).",
+          "description": "Max candidate versions a cold by-digest lookup derives before giving up (OCHARTED_RESOLVE_SCAN_LIMIT).",
           "title": "resolveScanLimit",
           "type": "integer"
         },
         "rewriteDependencies": {
           "default": false,
-          "description": "Rewrite HTTP(S) dependency repository URLs inside served charts to point back through this proxy (OCIFY_REWRITE_DEPENDENCIES), so `helm dependency update` also resolves through it. Requires `externalHost`; mutually exclusive with `provenanceEnabled`. Trade-off: rewritten charts no longer hash to the digest upstream's index publishes.",
+          "description": "Rewrite HTTP(S) dependency repository URLs inside served charts to point back through this proxy (OCHARTED_REWRITE_DEPENDENCIES), so `helm dependency update` also resolves through it. Requires `externalHost`; mutually exclusive with `provenanceEnabled`. Trade-off: rewritten charts no longer hash to the digest upstream's index publishes.",
           "title": "rewriteDependencies",
           "type": "boolean"
         },
         "shutdownTimeout": {
           "default": "15s",
-          "description": "Graceful drain bound on SIGTERM (OCIFY_SHUTDOWN_TIMEOUT).",
+          "description": "Graceful drain bound on SIGTERM (OCHARTED_SHUTDOWN_TIMEOUT).",
           "title": "shutdownTimeout",
           "type": "string"
         },
         "upstreamAllowlist": {
-          "description": "Upstream repo hosts that may be proxied, as glob patterns (OCIFY_UPSTREAM_ALLOWLIST), e.g. [\"*.github.io\", \"charts.jetstack.io\"]. Empty allows any public host. This is an SSRF boundary as much as an abuse guard — set it on any deployment reachable by untrusted clients.",
+          "description": "Upstream repo hosts that may be proxied, as glob patterns (OCHARTED_UPSTREAM_ALLOWLIST), e.g. [\"*.github.io\", \"charts.jetstack.io\"]. Empty allows any public host. This is an SSRF boundary as much as an abuse guard — set it on any deployment reachable by untrusted clients.",
           "items": {
             "required": []
           },
@@ -148,7 +148,7 @@
         },
         "upstreamTimeout": {
           "default": "30s",
-          "description": "One upstream HTTP exchange deadline (OCIFY_UPSTREAM_TIMEOUT).",
+          "description": "One upstream HTTP exchange deadline (OCHARTED_UPSTREAM_TIMEOUT).",
           "title": "upstreamTimeout",
           "type": "string"
         }
@@ -170,7 +170,7 @@
       "type": "object"
     },
     "envFrom": {
-      "description": "Sources of environment variables (templated), e.g. `- secretRef: { name: ocify-auth }`.",
+      "description": "Sources of environment variables (templated), e.g. `- secretRef: { name: ocharted-auth }`.",
       "items": {
         "required": []
       },
@@ -212,7 +212,7 @@
           "type": "string"
         },
         "repository": {
-          "default": "ghcr.io/home-operations/ocify",
+          "default": "ghcr.io/home-operations/ocharted",
           "description": "Image repository.",
           "title": "repository",
           "type": "string"
@@ -390,7 +390,7 @@
       "type": "object"
     },
     "podSecurityContext": {
-      "description": "Pod-level securityContext. ocify runs as the image's nonroot user (uid 65532); no host or elevated access is needed.",
+      "description": "Pod-level securityContext. ocharted runs as the image's nonroot user (uid 65532); no host or elevated access is needed.",
       "properties": {
         "fsGroup": {
           "default": 65532,
@@ -467,7 +467,7 @@
     },
     "replicaCount": {
       "default": 1,
-      "description": "Number of replicas. ocify is stateless and replicas re-derive identical answers, so \u003e1 is just more capacity/HA — no coordination, no sticky sessions.",
+      "description": "Number of replicas. ocharted is stateless and replicas re-derive identical answers, so \u003e1 is just more capacity/HA — no coordination, no sticky sessions.",
       "title": "replicaCount",
       "type": "integer"
     },
@@ -560,7 +560,7 @@
         },
         "automount": {
           "default": false,
-          "description": "Mount the API token. ocify never calls the Kubernetes API, so this is off by default.",
+          "description": "Mount the API token. ocharted never calls the Kubernetes API, so this is off by default.",
           "title": "automount",
           "type": "boolean"
         },
@@ -582,11 +582,11 @@
       "type": "object"
     },
     "signing": {
-      "description": "Cosign signing of served artifacts. When enabled, every manifest gets a\nsignature under cosign's sha256-\u003cdigest\u003e.sig tag convention, which Flux\nenforces via `verify.provider: cosign`. The signature attests the path\n(these bytes came through this ocify), not upstream authorship.",
+      "description": "Cosign signing of served artifacts. When enabled, every manifest gets a\nsignature under cosign's sha256-\u003cdigest\u003e.sig tag convention, which Flux\nenforces via `verify.provider: cosign`. The signature attests the path\n(these bytes came through this ocharted), not upstream authorship.",
       "properties": {
         "existingSecret": {
           "default": "",
-          "description": "Existing Secret holding a PEM-encoded Ed25519 private key (PKCS#8, e.g. `openssl genpkey -algorithm ed25519`). Ed25519 only — its deterministic signatures are what keep replicas stateless. Empty disables signing. The chart never manages this Secret: private key material belongs in your own (e.g. SOPS/sealed) Secret. NOTE: ocify reads the key once at startup, so rotating it requires a pod roll — e.g. set `reloader.stakater.com/auto` via `deploymentAnnotations`.",
+          "description": "Existing Secret holding a PEM-encoded Ed25519 private key (PKCS#8, e.g. `openssl genpkey -algorithm ed25519`). Ed25519 only — its deterministic signatures are what keep replicas stateless. Empty disables signing. The chart never manages this Secret: private key material belongs in your own (e.g. SOPS/sealed) Secret. NOTE: ocharted reads the key once at startup, so rotating it requires a pod roll — e.g. set `reloader.stakater.com/auto` via `deploymentAnnotations`.",
           "title": "existingSecret",
           "type": "string"
         },
@@ -637,7 +637,7 @@
       "type": "object"
     },
     "strategy": {
-      "description": "Deployment update strategy. RollingUpdate by default; ocify is stateless so a surge-then-drain rollout is safe.",
+      "description": "Deployment update strategy. RollingUpdate by default; ocharted is stateless so a surge-then-drain rollout is safe.",
       "properties": {
         "rollingUpdate": {
           "properties": {

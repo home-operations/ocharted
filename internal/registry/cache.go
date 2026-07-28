@@ -4,7 +4,7 @@ import (
 	"container/list"
 	"sync"
 
-	"github.com/home-operations/ocify/internal/oci"
+	"github.com/home-operations/ocharted/internal/oci"
 )
 
 // artifactCache is a byte-bounded LRU of derived artifacts, indexed three

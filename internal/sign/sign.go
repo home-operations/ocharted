@@ -1,10 +1,10 @@
 // Package sign derives cosign-compatible signature artifacts for served
 // manifests, on demand. A signature here attests the path — "these bytes came
-// through this ocify instance, unmodified" — not upstream authorship; Flux's
+// through this ocharted instance, unmodified" — not upstream authorship; Flux's
 // `verify.provider: cosign` turns that into an enforceable admission gate.
 //
 // Only Ed25519 keys are accepted, deliberately: Ed25519 signing is
-// deterministic, so a signature is — like everything else ocify serves — a
+// deterministic, so a signature is — like everything else ocharted serves — a
 // pure function of its inputs, and any replica re-derives byte-identical
 // signature blobs. Default ECDSA would produce different bytes per invocation
 // (random nonce) and silently break by-digest blob serving across replicas.
@@ -19,7 +19,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/home-operations/ocify/internal/oci"
+	"github.com/home-operations/ocharted/internal/oci"
 )
 
 // Media types of a cosign signature artifact.

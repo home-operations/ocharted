@@ -13,7 +13,7 @@ yq = "4.53.3"
 shellcheck = "0.11.0"
 
 [tasks.build]
-description = "Build the ocify binary"
+description = "Build the ocharted binary"
 run = "go build ./..."
 
 [tasks.fmt]
@@ -47,47 +47,47 @@ helm-docs --chart-search-root=charts --log-level=warn
 # values.schema.json from values.yaml. required/additionalProperties are skipped:
 # values.yaml provides every default (so nothing is user-required), and the free-form
 # maps (annotations, env, …) must stay open. --append-newline gives a clean EOF.
-helm-schema --chart-search-root charts/ocify --skip-auto-generation required,additionalProperties --append-newline
+helm-schema --chart-search-root charts/ocharted --skip-auto-generation required,additionalProperties --append-newline
 """
 
 [tasks.generate-check]
 description = "Fail if the committed generated files are stale (CI gate)"
 run = """
 mise run generate
-git diff --exit-code charts/ocify/README.md charts/ocify/values.schema.json
+git diff --exit-code charts/ocharted/README.md charts/ocharted/values.schema.json
 """
 
 [tasks.helm-lint]
 description = "Lint the Helm chart"
-run = "helm lint charts/ocify"
+run = "helm lint charts/ocharted"
 
 [tasks.helm-unittest]
 description = "Run helm-unittest template tests (needs the helm-unittest plugin)"
-run = "helm unittest charts/ocify"
+run = "helm unittest charts/ocharted"
 
 [tasks.helm-template]
 description = "Render the Helm chart with default values"
-run = "helm template ocify charts/ocify"
+run = "helm template ocharted charts/ocharted"
 
 [tasks.flux-e2e]
-description = "E2E: flux-operator + FluxInstance in the current cluster, cosign-verified OCIRepository + HelmRelease through ocify"
+description = "E2E: flux-operator + FluxInstance in the current cluster, cosign-verified OCIRepository + HelmRelease through ocharted"
 # Same contract as helm-test: export KUBECONFIG to a disposable (kind) cluster
-# first; the CI job kind-loads the PR image and sets OCIFY_TEST_IMAGE_TAG=e2e
+# first; the CI job kind-loads the PR image and sets OCHARTED_TEST_IMAGE_TAG=e2e
 # with pull policy Never.
 run = "bash test/e2e/flux/run.sh"
 
 [tasks.helm-test]
 description = "Install the chart into the current cluster (e.g. a kind context) and run `helm test`"
 # The e2e workflow builds the PR's image, kind-loads it, and sets
-# OCIFY_TEST_IMAGE_TAG=e2e + pull policy Never so the test runs the code under
+# OCHARTED_TEST_IMAGE_TAG=e2e + pull policy Never so the test runs the code under
 # review; locally these default to the published `latest` for a quick chart
 # check. Export KUBECONFIG to the kind context first.
 run = """
 set -e
-helm upgrade --install ocify-e2e charts/ocify -n ocify-e2e --create-namespace --wait --timeout 5m \
-  --set image.tag="${OCIFY_TEST_IMAGE_TAG:-latest}" \
-  --set image.pullPolicy="${OCIFY_TEST_PULL_POLICY:-IfNotPresent}"
-helm test ocify-e2e -n ocify-e2e --logs
+helm upgrade --install ocharted-e2e charts/ocharted -n ocharted-e2e --create-namespace --wait --timeout 5m \
+  --set image.tag="${OCHARTED_TEST_IMAGE_TAG:-latest}" \
+  --set image.pullPolicy="${OCHARTED_TEST_PULL_POLICY:-IfNotPresent}"
+helm test ocharted-e2e -n ocharted-e2e --logs
 """
 
 [hooks]

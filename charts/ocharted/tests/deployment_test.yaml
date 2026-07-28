@@ -5,8 +5,8 @@ templates:
   - templates/deployment.tpl
   - templates/secret.tpl
 release:
-  name: ocify
-  namespace: ocify
+  name: ocharted
+  namespace: ocharted
 tests:
   - it: is a Deployment with a RollingUpdate strategy by default
     asserts:
@@ -16,40 +16,40 @@ tests:
           path: spec.strategy.type
           value: RollingUpdate
     template: templates/deployment.tpl
-  - it: wires the core OCIFY_* env
+  - it: wires the core OCHARTED_* env
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: OCIFY_PORT
+            name: OCHARTED_PORT
             value: "8080"
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: OCIFY_INDEX_TTL
+            name: OCHARTED_INDEX_TTL
             value: 5m
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: OCIFY_INDEX_STALE_TTL
+            name: OCHARTED_INDEX_STALE_TTL
             value: 24h
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: OCIFY_CACHE_MAX_BYTES
+            name: OCHARTED_CACHE_MAX_BYTES
             value: "268435456"
     template: templates/deployment.tpl
-  - it: omits OCIFY_UPSTREAM_ALLOWLIST and OCIFY_AUTH by default
+  - it: omits OCHARTED_UPSTREAM_ALLOWLIST and OCHARTED_AUTH by default
     asserts:
       - notContains:
           path: spec.template.spec.containers[0].env
           content:
-            name: OCIFY_UPSTREAM_ALLOWLIST
+            name: OCHARTED_UPSTREAM_ALLOWLIST
         any: true
       - notContains:
           path: spec.template.spec.containers[0].env
           content:
-            name: OCIFY_AUTH
+            name: OCHARTED_AUTH
         any: true
     template: templates/deployment.tpl
   - it: joins the upstream allowlist into one env value
@@ -60,10 +60,10 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: OCIFY_UPSTREAM_ALLOWLIST
+            name: OCHARTED_UPSTREAM_ALLOWLIST
             value: "*.github.io,charts.jetstack.io"
     template: templates/deployment.tpl
-  - it: sources OCIFY_AUTH from the chart-managed Secret when auth.users is set
+  - it: sources OCHARTED_AUTH from the chart-managed Secret when auth.users is set
     set:
       auth:
         users: "flux:hunter2"
@@ -71,15 +71,15 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: OCIFY_AUTH
+            name: OCHARTED_AUTH
             valueFrom:
               secretKeyRef:
-                name: ocify
+                name: ocharted
                 key: auth
       - exists:
           path: spec.template.metadata.annotations["checksum/secret"]
     template: templates/deployment.tpl
-  - it: sources OCIFY_AUTH from an existing Secret when given
+  - it: sources OCHARTED_AUTH from an existing Secret when given
     set:
       auth:
         existingSecret: my-auth
@@ -88,7 +88,7 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: OCIFY_AUTH
+            name: OCHARTED_AUTH
             valueFrom:
               secretKeyRef:
                 name: my-auth
@@ -113,7 +113,7 @@ tests:
       - notContains:
           path: spec.template.spec.containers[0].env
           content:
-            name: OCIFY_SIGNING_KEY_PATH
+            name: OCHARTED_SIGNING_KEY_PATH
         any: true
       - notExists:
           path: spec.template.spec.volumes
@@ -123,25 +123,25 @@ tests:
       - notContains:
           path: spec.template.spec.containers[0].env
           content:
-            name: OCIFY_REWRITE_DEPENDENCIES
+            name: OCHARTED_REWRITE_DEPENDENCIES
         any: true
     template: templates/deployment.tpl
   - it: wires rewrite env when enabled with an external host
     set:
       config:
         rewriteDependencies: true
-        externalHost: ocify.example.com
+        externalHost: ocharted.example.com
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: OCIFY_REWRITE_DEPENDENCIES
+            name: OCHARTED_REWRITE_DEPENDENCIES
             value: "true"
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: OCIFY_EXTERNAL_HOST
-            value: ocify.example.com
+            name: OCHARTED_EXTERNAL_HOST
+            value: ocharted.example.com
     template: templates/deployment.tpl
   - it: fails to render when rewrite is enabled without an external host
     set:
@@ -154,23 +154,23 @@ tests:
   - it: mounts the signing key when signing.existingSecret is set
     set:
       signing:
-        existingSecret: ocify-signing
+        existingSecret: ocharted-signing
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: OCIFY_SIGNING_KEY_PATH
-            value: /etc/ocify/signing/signing.key
+            name: OCHARTED_SIGNING_KEY_PATH
+            value: /etc/ocharted/signing/signing.key
       - contains:
           path: spec.template.spec.volumes
           content:
             name: signing-key
             secret:
-              secretName: ocify-signing
+              secretName: ocharted-signing
       - contains:
           path: spec.template.spec.containers[0].volumeMounts
           content:
             name: signing-key
-            mountPath: /etc/ocify/signing
+            mountPath: /etc/ocharted/signing
             readOnly: true
     template: templates/deployment.tpl

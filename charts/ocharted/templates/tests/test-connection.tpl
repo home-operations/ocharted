@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: {{ include "ocify.fullname" . }}-test-connection
+  name: {{ include "ocharted.fullname" . }}-test-connection
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "ocify.labels" . | nindent 4 }}
+    {{- include "ocharted.labels" . | nindent 4 }}
   annotations:
     helm.sh/hook: test
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
@@ -14,7 +14,7 @@ spec:
     {{- toYaml .Values.podSecurityContext | nindent 4 }}
   containers:
     - name: curl
-      image: {{ include "ocify.testImage" . | quote }}
+      image: {{ include "ocharted.testImage" . | quote }}
       imagePullPolicy: {{ .Values.tests.image.pullPolicy }}
       securityContext:
         {{- toYaml .Values.securityContext | nindent 8 }}
@@ -23,7 +23,7 @@ spec:
         - -c
         - |
           set -eu
-          base="http://{{ include "ocify.fullname" . }}:{{ .Values.service.port }}"
+          base="http://{{ include "ocharted.fullname" . }}:{{ .Values.service.port }}"
           echo "GET ${base}/readyz"
           body="$(curl -fsS "${base}/readyz")"
           echo "${body}"

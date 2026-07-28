@@ -70,7 +70,7 @@ func RewriteDependencies(chart []byte, externalHost string) ([]byte, error) {
 
 	// Repack with NoCompression: deflate output is implementation-defined and
 	// has changed between Go releases, which would silently shift rewritten
-	// digests across ocify builds; stored-block framing is format-stable, so
+	// digests across ocharted builds; stored-block framing is format-stable, so
 	// digests survive toolchain upgrades. Charts are small — the bandwidth
 	// cost is noise.
 	var buf bytes.Buffer

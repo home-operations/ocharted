@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/home-operations/ocify/internal/testchart"
+	"github.com/home-operations/ocharted/internal/testchart"
 )
 
 func TestBuildDeterministic(t *testing.T) {

@@ -49,7 +49,7 @@ func (s *Server) basicAuth(next http.Handler) http.Handler {
 		user, pass, ok := r.BasicAuth()
 		want, known := s.cfg.Users[user]
 		if !ok || !known || subtle.ConstantTimeCompare([]byte(pass), []byte(want)) != 1 {
-			w.Header().Set("WWW-Authenticate", `Basic realm="ocify"`)
+			w.Header().Set("WWW-Authenticate", `Basic realm="ocharted"`)
 			w.Header().Set("Docker-Distribution-API-Version", "registry/2.0")
 			writeOCIError(w, http.StatusUnauthorized, "UNAUTHORIZED", "authentication required")
 			return
@@ -118,7 +118,7 @@ func (s *Server) accessLog(next http.Handler) http.Handler {
 
 // monitoringPaths are the scrape/probe endpoints whose access log is noise at
 // the scrape/probe cadence, so it is emitted at Debug — visible only under
-// OCIFY_LOG_LEVEL=debug — rather than at Info with real traffic.
+// OCHARTED_LOG_LEVEL=debug — rather than at Info with real traffic.
 var monitoringPaths = map[string]struct{}{
 	"/metrics": {}, "/healthz": {}, "/readyz": {},
 }
