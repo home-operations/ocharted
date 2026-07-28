@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/home-operations/ocharted/compare/0.1.2...0.1.3) (2026-07-28)
+
+
+### Bug Fixes
+
+* log the X-Forwarded-For chain and auth outcome in access logs ([#10](https://github.com/home-operations/ocharted/issues/10)) ([efec437](https://github.com/home-operations/ocharted/commit/efec437076296fff0703241f585289e12f5281f5))
+
 ## [0.1.2](https://github.com/home-operations/ocharted/compare/0.1.1...0.1.2) (2026-07-28)
 
 
