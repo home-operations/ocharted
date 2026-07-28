@@ -10,17 +10,21 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+// labelMethod is the request-method key shared by the metric labels and the
+// access-log attribute.
+const labelMethod = "method"
+
 var (
 	httpRequests = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "ocharted_http_requests_total",
 		Help: "Total number of inbound HTTP requests handled, by method and status class.",
-	}, []string{"method", "status"})
+	}, []string{labelMethod, "status"})
 
 	httpDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "ocharted_http_request_duration_seconds",
 		Help:    "Inbound HTTP request duration in seconds, by method.",
 		Buckets: prometheus.DefBuckets,
-	}, []string{"method"})
+	}, []string{labelMethod})
 
 	// artifactBuilds counts full chart derivations (download + package): the
 	// real upstream work. Compare against cache events to judge TTL tuning.
