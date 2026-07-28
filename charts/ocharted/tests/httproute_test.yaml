@@ -1,0 +1,62 @@
+suite: httproute
+templates:
+  - templates/httproute.tpl
+release:
+  name: ocharted
+  namespace: ocharted
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: routes the default rule to the registry service
+    set:
+      httpRoute:
+        enabled: true
+        parentRefs:
+          - name: gateway
+            namespace: gateway
+            sectionName: https
+        hostnames:
+          - ocharted.example.com
+    asserts:
+      - isKind:
+          of: HTTPRoute
+      - equal:
+          path: apiVersion
+          value: gateway.networking.k8s.io/v1
+      - equal:
+          path: spec.hostnames
+          value:
+            - ocharted.example.com
+      - contains:
+          path: spec.parentRefs
+          content:
+            name: gateway
+            namespace: gateway
+            sectionName: https
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: ocharted
+      - equal:
+          path: spec.rules[0].backendRefs[0].port
+          value: 8080
+      - equal:
+          path: spec.rules[0].matches[0].path.type
+          value: PathPrefix
+
+  - it: emits a redirect-only rule when httpsRedirect is set
+    set:
+      httpRoute:
+        enabled: true
+        httpsRedirect: true
+    asserts:
+      - equal:
+          path: spec.rules[0].filters[0].type
+          value: RequestRedirect
+      - equal:
+          path: spec.rules[0].filters[0].requestRedirect.statusCode
+          value: 301
+      - notExists:
+          path: spec.rules[0].backendRefs
