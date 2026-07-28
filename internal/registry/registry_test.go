@@ -162,6 +162,7 @@ func TestAuthBypassNetworks(t *testing.T) {
 		want  int
 	}{
 		{"in-cluster peer, no XFF", "10.42.0.5:41000", nil, false, http.StatusOK},
+		{"in-cluster peer as IPv4-mapped IPv6 (dual-stack listener)", "[::ffff:10.42.0.5]:41000", nil, false, http.StatusOK},
 		{"gateway peer, internal client in XFF", "10.42.0.5:41000", []string{"192.168.1.20"}, false, http.StatusOK},
 		{"gateway peer, external client in XFF", "10.42.0.5:41000", []string{"203.0.113.9, 10.42.0.1"}, false, http.StatusUnauthorized},
 		{"external peer, forged internal XFF", "203.0.113.9:52000", []string{"10.42.0.1"}, false, http.StatusUnauthorized},

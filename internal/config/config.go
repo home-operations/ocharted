@@ -162,6 +162,13 @@ func Load() (*Config, error) {
 		if err != nil {
 			return nil, fmt.Errorf("config: invalid OCHARTED_AUTH_BYPASS_NETWORKS entry %q: %w", raw, err)
 		}
+		// Normalize IPv4-mapped IPv6 prefixes (::ffff:10.42.0.0/112) to plain
+		// IPv4, mirroring the Unmap applied to client addresses at match time —
+		// netip.Prefix.Contains rejects address-family mismatches, so an
+		// unnormalized mapped prefix would silently never match.
+		if addr := prefix.Addr(); addr.Is4In6() && prefix.Bits() >= 96 {
+			prefix = netip.PrefixFrom(addr.Unmap(), prefix.Bits()-96)
+		}
 		cfg.AuthBypassNets = append(cfg.AuthBypassNets, prefix)
 	}
 

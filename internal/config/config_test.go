@@ -43,14 +43,19 @@ func TestLoadAuthAndAllowlist(t *testing.T) {
 
 func TestLoadAuthBypassNetworks(t *testing.T) {
 	t.Setenv("OCHARTED_AUTH", "flux:hunter2")
-	t.Setenv("OCHARTED_AUTH_BYPASS_NETWORKS", "10.42.0.0/16, 192.168.0.0/16")
+	t.Setenv("OCHARTED_AUTH_BYPASS_NETWORKS", "10.42.0.0/16, 192.168.0.0/16, ::ffff:10.44.0.0/112")
 
 	cfg, err := Load()
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if len(cfg.AuthBypassNets) != 2 || cfg.AuthBypassNets[0].String() != "10.42.0.0/16" {
+	if len(cfg.AuthBypassNets) != 3 || cfg.AuthBypassNets[0].String() != "10.42.0.0/16" {
 		t.Fatalf("unexpected bypass networks: %v", cfg.AuthBypassNets)
+	}
+	// IPv4-mapped IPv6 prefixes normalize to plain IPv4, matching the Unmap
+	// applied to client addresses at match time.
+	if cfg.AuthBypassNets[2].String() != "10.44.0.0/16" {
+		t.Fatalf("mapped prefix not normalized: %v", cfg.AuthBypassNets[2])
 	}
 }
 
