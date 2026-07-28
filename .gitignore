@@ -19,8 +19,8 @@ bin/
 dist/
 tmp/
 
-# Stray `go build ./cmd/ocilm` output at the repo root
-/ocilm
+# Stray `go build ./cmd/ocharted` output at the repo root
+/ocharted
 
 # Preserve files
 !.gitkeep

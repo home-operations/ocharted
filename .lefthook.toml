@@ -8,17 +8,20 @@ configs = ["lefthook.common.toml"]
 # the commit. CI's generate-check is the backstop.
 [pre-commit.commands.generate]
 glob = [
-  "charts/ocilm/Chart.yaml",
-  "charts/ocilm/values.yaml",
-  "charts/ocilm/README.md.gotmpl",
+  "charts/ocharted/Chart.yaml",
+  "charts/ocharted/values.yaml",
+  "charts/ocharted/README.md.gotmpl",
 ]
-run = "mise run generate && git add charts/ocilm/README.md charts/ocilm/values.schema.json"
+run = "mise run generate && git add charts/ocharted/README.md charts/ocharted/values.schema.json"
 
 # The generated chart README/schema are .prettierignore'd; exclude them from the
 # shared formatters too, so oxfmt isn't handed a file it then drops (it exits
 # non-zero when every input is ignored, which would block the commit).
 [pre-commit.commands.format-markdown]
-exclude = ["charts/ocilm/README.md"]
+exclude = ["charts/ocharted/README.md"]
 
 [pre-commit.commands.format-json]
-exclude = ["charts/ocilm/values.schema.json"]
+exclude = [
+  "charts/ocharted/values.schema.json",
+  ".release-please-manifest.json",
+]
