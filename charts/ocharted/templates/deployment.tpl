@@ -105,6 +105,10 @@ spec:
                   name: {{ .Values.auth.existingSecret | default (include "ocharted.fullname" .) }}
                   key: {{ if .Values.auth.existingSecret }}{{ .Values.auth.existingSecretKey }}{{ else }}auth{{ end }}
             {{- end }}
+            {{- with .Values.auth.bypassNetworks }}
+            - name: OCHARTED_AUTH_BYPASS_NETWORKS
+              value: {{ join "," . | quote }}
+            {{- end }}
             {{- if .Values.signing.existingSecret }}
             - name: OCHARTED_SIGNING_KEY_PATH
               value: /etc/ocharted/signing/{{ .Values.signing.existingSecretKey }}

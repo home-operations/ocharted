@@ -58,6 +58,7 @@ Kubernetes: `>=1.25.0-0`
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Affinity rules for pod scheduling (templated). |
+| auth.bypassNetworks | list | `[]` | CIDRs whose traffic skips basic auth (OCHARTED_AUTH_BYPASS_NETWORKS): a request is anonymous iff its entire connection chain — TCP peer plus every X-Forwarded-For hop — lies within these networks. Typical value: pod + service + LAN CIDRs, so in-cluster Flux/Renovate pull anonymously through the same public hostname external clients must authenticate to. Every listed hop (gateway, tunnel) must append to X-Forwarded-For truthfully (Envoy and Cloudflare do). Requires auth to be enabled. |
 | auth.existingSecret | string | `""` | Use this existing Secret for OCHARTED_AUTH instead of rendering one. |
 | auth.existingSecretKey | string | `"auth"` | Key in `existingSecret` holding the `user:password,…` list. |
 | auth.users | string | `""` | Basic-auth users as a `user:password,user2:password2` list (OCHARTED_AUTH). If set, it is rendered into a chart-managed Secret. Leave empty and use `existingSecret` to supply it from your own (e.g. SOPS/sealed) Secret. |

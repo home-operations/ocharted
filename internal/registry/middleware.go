@@ -3,8 +3,11 @@ package registry
 import (
 	"crypto/subtle"
 	"log/slog"
+	"net"
 	"net/http"
+	"net/netip"
 	"runtime/debug"
+	"strings"
 	"time"
 )
 
@@ -40,12 +43,20 @@ func (r *statusRecorder) Unwrap() http.ResponseWriter { return r.ResponseWriter 
 // configured. The 401 carries the Basic challenge, which is what makes the
 // standard registry credential flow work: clients ping /v2/, get challenged,
 // and retry with the dockerconfigjson/hostRule credentials. With no users
-// configured the registry is anonymous and this is a pass-through.
+// configured the registry is anonymous and this is a pass-through. Requests
+// whose whole connection chain lies within the bypass networks (see
+// chainWithin) skip auth, so in-cluster clients pull anonymously through the
+// same hostname external clients must authenticate to.
 func (s *Server) basicAuth(next http.Handler) http.Handler {
 	if len(s.cfg.Users) == 0 {
 		return next
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if len(s.cfg.AuthBypassNets) > 0 && chainWithin(r, s.cfg.AuthBypassNets) {
+			authBypassed.Inc()
+			next.ServeHTTP(w, r)
+			return
+		}
 		user, pass, ok := r.BasicAuth()
 		want, known := s.cfg.Users[user]
 		if !ok || !known || subtle.ConstantTimeCompare([]byte(pass), []byte(want)) != 1 {
@@ -56,6 +67,46 @@ func (s *Server) basicAuth(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// chainWithin reports whether the request's entire connection chain — the TCP
+// peer plus every X-Forwarded-For hop — lies within nets. Any hop outside
+// means an external party was in the path: either as the real client, or as
+// the forger of an XFF entry whose own address a trusted gateway then
+// appended (Envoy and Cloudflare append truthfully, which the bypass model
+// requires of every hop). Order therefore doesn't matter, and anything
+// malformed fails closed to "not within".
+func chainWithin(r *http.Request, nets []netip.Prefix) bool {
+	if !addrWithin(r.RemoteAddr, nets) {
+		return false
+	}
+	for _, xff := range r.Header.Values("X-Forwarded-For") {
+		for entry := range strings.SplitSeq(xff, ",") {
+			if !addrWithin(strings.TrimSpace(entry), nets) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// addrWithin parses s ("ip" or "ip:port") and reports whether it falls in any
+// of nets. Unparseable input is "not within" — fail closed.
+func addrWithin(s string, nets []netip.Prefix) bool {
+	if host, _, err := net.SplitHostPort(s); err == nil {
+		s = host
+	}
+	addr, err := netip.ParseAddr(s)
+	if err != nil {
+		return false
+	}
+	addr = addr.Unmap()
+	for _, n := range nets {
+		if n.Contains(addr) {
+			return true
+		}
+	}
+	return false
 }
 
 // securityHeaders makes any JSON response inert in a browser: nosniff stops
