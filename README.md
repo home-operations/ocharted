@@ -109,6 +109,14 @@ pinning included. For an authenticated deployment:
 }
 ```
 
+If you template the username from `secrets` as well, give it an opaque value
+that can never appear in a package path. Renovate refuses to write any secret
+value into generated text: a username like `ocharted` while charts are pulled
+from `ghcr.io/example/charts/ocharted` aborts the entire repository run with
+`config-secrets-exposed` as soon as that string lands in a commit message. The
+telltale symptom is log redaction masking text that is not secret, such as
+`"matchHost": "**redacted**.example.com"`.
+
 When ocharted is cluster-internal and Renovate is not, redirect version lookups to
 the real upstream — the proxy never invents version information, so the answers
 are identical by construction:
