@@ -1,0 +1,15 @@
+---
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+spec:
+  distribution:
+    version: 2.x
+    registry: ghcr.io/fluxcd
+  # Only the two controllers the e2e exercises: source-controller pulls the
+  # chart through ocify (and cosign-verifies it), helm-controller installs it.
+  components:
+    - source-controller
+    - helm-controller

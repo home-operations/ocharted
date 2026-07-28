@@ -580,7 +580,7 @@
       "properties": {
         "existingSecret": {
           "default": "",
-          "description": "Existing Secret holding a PEM-encoded Ed25519 private key (PKCS#8, e.g. `openssl genpkey -algorithm ed25519`). Ed25519 only — its deterministic signatures are what keep replicas stateless. Empty disables signing. The chart never manages this Secret: private key material belongs in your own (e.g. SOPS/sealed) Secret.",
+          "description": "Existing Secret holding a PEM-encoded Ed25519 private key (PKCS#8, e.g. `openssl genpkey -algorithm ed25519`). Ed25519 only — its deterministic signatures are what keep replicas stateless. Empty disables signing. The chart never manages this Secret: private key material belongs in your own (e.g. SOPS/sealed) Secret. NOTE: ocify reads the key once at startup, so rotating it requires a pod roll — e.g. set `reloader.stakater.com/auto` via `deploymentAnnotations`.",
           "title": "existingSecret",
           "type": "string"
         },

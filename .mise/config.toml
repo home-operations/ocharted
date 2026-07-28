@@ -10,6 +10,7 @@ oxfmt = "0.60.0"
 zizmor = "1.28.0"
 helm-docs = "1.14.2"
 yq = "4.53.3"
+shellcheck = "0.11.0"
 
 [tasks.build]
 description = "Build the ocify binary"
@@ -67,6 +68,13 @@ run = "helm unittest charts/ocify"
 [tasks.helm-template]
 description = "Render the Helm chart with default values"
 run = "helm template ocify charts/ocify"
+
+[tasks.flux-e2e]
+description = "E2E: flux-operator + FluxInstance in the current cluster, cosign-verified OCIRepository + HelmRelease through ocify"
+# Same contract as helm-test: export KUBECONFIG to a disposable (kind) cluster
+# first; the CI job kind-loads the PR image and sets OCIFY_TEST_IMAGE_TAG=e2e
+# with pull policy Never.
+run = "bash test/e2e/flux/run.sh"
 
 [tasks.helm-test]
 description = "Install the chart into the current cluster (e.g. a kind context) and run `helm test`"

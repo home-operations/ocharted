@@ -1,0 +1,33 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: podinfo
+  namespace: podinfo
+spec:
+  interval: 1m
+  # The in-cluster ocify Service speaks plain HTTP.
+  insecure: true
+  layerSelector:
+    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+    operation: copy
+  ref:
+    # A semver range (not a pinned tag) so the e2e also exercises tags/list
+    # resolution through the proxy.
+    semver: ">=6.0.0"
+  url: oci://ocify.ocify-e2e.svc.cluster.local:8080/stefanprodan.github.io/podinfo/podinfo
+  verify:
+    provider: cosign
+    secretRef:
+      name: ocify-pub
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: podinfo
+  namespace: podinfo
+spec:
+  interval: 5m
+  chartRef:
+    kind: OCIRepository
+    name: podinfo
