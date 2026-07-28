@@ -85,6 +85,7 @@ func run() error {
 	up := upstream.New(upstream.Options{
 		Timeout:       cfg.UpstreamTimeout,
 		IndexTTL:      cfg.IndexTTL,
+		IndexStaleTTL: cfg.IndexStaleTTL,
 		MaxIndexBytes: cfg.MaxIndexBytes,
 		MaxChartBytes: cfg.MaxChartBytes,
 		AllowPrivate:  cfg.AllowPrivateUpstreams,

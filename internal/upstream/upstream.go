@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -44,6 +45,10 @@ type Options struct {
 	Timeout time.Duration
 	// IndexTTL is how long a fetched index.yaml is reused before re-fetching.
 	IndexTTL time.Duration
+	// IndexStaleTTL bounds stale-if-error: when a re-fetch fails with a
+	// non-authoritative error, an expired cache entry younger than this is
+	// served instead of the error, riding out upstream outages. 0 disables.
+	IndexStaleTTL time.Duration
 	// MaxIndexBytes / MaxChartBytes cap the respective response bodies.
 	MaxIndexBytes int64
 	MaxChartBytes int64
@@ -72,7 +77,7 @@ type Client struct {
 
 type cachedIndex struct {
 	idx     *Index
-	expires time.Time
+	fetched time.Time
 }
 
 // New builds a Client from opts.
@@ -100,7 +105,8 @@ func New(opts Options) *Client {
 
 // Index returns the parsed index.yaml for repo ("host" or "host/path"),
 // cached per TTL. Concurrent misses for the same repo are collapsed into one
-// upstream fetch.
+// upstream fetch. When the re-fetch of an expired entry fails, the stale
+// entry is served instead (bounded by IndexStaleTTL) — see staleFor.
 func (c *Client) Index(ctx context.Context, repo string) (*Index, error) {
 	if !hostAllowed(repoHost(repo), c.opts.AllowedHosts) {
 		return nil, fmt.Errorf("%w: %s", ErrHostNotAllowed, repo)
@@ -109,7 +115,7 @@ func (c *Client) Index(ctx context.Context, repo string) (*Index, error) {
 	c.mu.Lock()
 	entry, ok := c.cache[repo]
 	c.mu.Unlock()
-	if ok && time.Now().Before(entry.expires) {
+	if ok && time.Since(entry.fetched) < c.opts.IndexTTL {
 		return entry.idx, nil
 	}
 
@@ -126,9 +132,35 @@ func (c *Client) Index(ctx context.Context, repo string) (*Index, error) {
 		return idx, nil
 	})
 	if err != nil {
+		if stale := c.staleFor(repo, err); stale != nil {
+			return stale, nil
+		}
 		return nil, err
 	}
 	return v.(*Index), nil
+}
+
+// staleFor implements stale-if-error: an expired cache entry younger than
+// IndexStaleTTL is served when the re-fetch failed for a non-authoritative
+// reason (network fault, 5xx, oversize, parse error). Authoritative answers
+// are never masked: a 404 means the repo is gone and an allowlist rejection
+// is policy. Serving stale trades bounded staleness for riding out upstream
+// outages — the entry is derived data either way, so no statefulness rule is
+// broken; a replica without the entry simply degrades to the error.
+func (c *Client) staleFor(repo string, err error) *Index {
+	if c.opts.IndexStaleTTL <= 0 || errors.Is(err, ErrNotFound) || errors.Is(err, ErrHostNotAllowed) {
+		return nil
+	}
+	c.mu.Lock()
+	entry, ok := c.cache[repo]
+	c.mu.Unlock()
+	if !ok || time.Since(entry.fetched) > c.opts.IndexStaleTTL {
+		return nil
+	}
+	staleIndexServed.Inc()
+	slog.Warn("serving stale index: upstream fetch failed",
+		"repo", repo, "age", time.Since(entry.fetched).Round(time.Second).String(), "error", err)
+	return entry.idx
 }
 
 // Chart downloads the tarball for entry and verifies it against the digest
@@ -177,9 +209,12 @@ func (c *Client) store(repo string, idx *Index) {
 		c.cache = map[string]cachedIndex{}
 	}
 	if len(c.cache) >= maxIndexCacheEntries {
+		// Prefer evicting entries past even their stale-if-error window, then
+		// whatever it takes to get under the cap.
 		now := time.Now()
+		maxAge := max(c.opts.IndexTTL, c.opts.IndexStaleTTL)
 		for k, v := range c.cache {
-			if now.After(v.expires) {
+			if now.Sub(v.fetched) > maxAge {
 				delete(c.cache, k)
 			}
 		}
@@ -190,7 +225,7 @@ func (c *Client) store(repo string, idx *Index) {
 			delete(c.cache, k)
 		}
 	}
-	c.cache[repo] = cachedIndex{idx: idx, expires: time.Now().Add(c.opts.IndexTTL)}
+	c.cache[repo] = cachedIndex{idx: idx, fetched: time.Now()}
 }
 
 // fetch GETs url and returns at most limit bytes, mapping HTTP status onto

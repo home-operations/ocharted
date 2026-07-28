@@ -47,6 +47,7 @@ func startProxy(t *testing.T, signer *sign.Signer, rewriteHost string) *httptest
 	up := upstream.New(upstream.Options{
 		Timeout:       cfg.UpstreamTimeout,
 		IndexTTL:      cfg.IndexTTL,
+		IndexStaleTTL: cfg.IndexStaleTTL,
 		MaxIndexBytes: cfg.MaxIndexBytes,
 		MaxChartBytes: cfg.MaxChartBytes,
 		UserAgent:     "ocify-e2e",

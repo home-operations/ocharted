@@ -111,6 +111,7 @@ func (f *fixture) newProxy(t *testing.T) *httptest.Server {
 	up := upstream.New(upstream.Options{
 		Timeout:       5 * time.Second,
 		IndexTTL:      f.cfg.IndexTTL,
+		IndexStaleTTL: f.cfg.IndexStaleTTL,
 		MaxIndexBytes: f.cfg.MaxIndexBytes,
 		MaxChartBytes: f.cfg.MaxChartBytes,
 		AllowPrivate:  true,

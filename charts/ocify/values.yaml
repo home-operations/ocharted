@@ -44,6 +44,8 @@ config:
   logFormat: json
   # -- Upstream index.yaml cache TTL (OCIFY_INDEX_TTL) — how fast new chart versions appear, and how often upstreams are re-fetched.
   indexTTL: 5m
+  # -- Stale-if-error bound (OCIFY_INDEX_STALE_TTL): when re-fetching an expired index fails (network fault, upstream 5xx), the cached copy is served up to this age, so upstream outages delay freshness instead of failing Flux reconciles. Authoritative answers (404, allowlist rejection) are never masked. "0" disables.
+  indexStaleTTL: 24h
   # -- In-memory derived-artifact cache bound in bytes (OCIFY_CACHE_MAX_BYTES). Purely a latency/upstream-traffic optimization; size resources.limits.memory above it with headroom.
   cacheMaxBytes: 268435456
   # -- Upstream index.yaml size cap in bytes (OCIFY_MAX_INDEX_BYTES); generous because real indexes get big (Bitnami's is tens of MB).

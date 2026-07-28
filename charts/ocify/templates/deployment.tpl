@@ -74,6 +74,8 @@ spec:
               value: {{ .Values.config.logFormat | quote }}
             - name: OCIFY_INDEX_TTL
               value: {{ .Values.config.indexTTL | quote }}
+            - name: OCIFY_INDEX_STALE_TTL
+              value: {{ .Values.config.indexStaleTTL | quote }}
             - name: OCIFY_CACHE_MAX_BYTES
               value: {{ .Values.config.cacheMaxBytes | int64 | quote }}
             - name: OCIFY_MAX_INDEX_BYTES

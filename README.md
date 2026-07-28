@@ -139,6 +139,7 @@ Everything is environment variables; there is no config file.
 | `OCIFY_METRICS_PORT`            | `8081`      | `/metrics` listener                                                                                |
 | `OCIFY_AUTH`                    | _(empty)_   | `user:password` list (comma-separated); empty = anonymous                                          |
 | `OCIFY_INDEX_TTL`               | `5m`        | Upstream `index.yaml` cache TTL — the freshness/politeness knob                                    |
+| `OCIFY_INDEX_STALE_TTL`         | `24h`       | Stale-if-error bound: serve the cached index this long when upstream is down; `0` disables         |
 | `OCIFY_CACHE_MAX_BYTES`         | `268435456` | In-memory derived-artifact cache bound                                                             |
 | `OCIFY_MAX_INDEX_BYTES`         | `67108864`  | Upstream index size cap                                                                            |
 | `OCIFY_MAX_CHART_BYTES`         | `33554432`  | Upstream chart tarball size cap                                                                    |
@@ -169,6 +170,35 @@ Responses carry caching headers: by-digest manifests and blobs are
 plain ingress ignores these, but a caching layer in front — e.g. a Cloudflare
 cache rule covering the ocify host — will serve the heavy immutable endpoints
 from its edge with no further configuration.
+
+## Resiliency
+
+ocify sits in Flux's _update_ path, never the runtime path: if it (or an
+upstream) is unreachable, source-controller keeps serving its last stored
+artifact and running HelmReleases are untouched — only version freshness is
+delayed. With that in mind, resiliency in practice:
+
+- **Run 2+ replicas with a PodDisruptionBudget.** Statelessness makes this
+  free — no coordination, any replica answers any request — so rollouts, node
+  drains, and crashes never present downtime to clients. This is the single
+  biggest lever; the chart's `replicaCount` and `podDisruptionBudget` values
+  cover it.
+- **Upstream outages are absorbed by stale-if-error.** When re-fetching an
+  expired index fails with a non-authoritative error (network fault, 5xx),
+  ocify serves the cached copy for up to `OCIFY_INDEX_STALE_TTL` (default
+  24h), logging a warning and counting
+  `ocify_upstream_stale_index_served_total`. Authoritative answers — a 404
+  (repo gone) or an allowlist rejection — are never masked. Chart downloads
+  themselves have no stale fallback (there is nothing cached to serve
+  correctly), but Flux only downloads on version changes.
+- **No Flux features need enabling.** Failed reconciles retry automatically
+  with exponential backoff (source-controller defaults: 750ms doubling up to
+  a 15m cap, tunable via `--min-retry-delay`/`--max-retry-delay` if the
+  post-outage catch-up lag ever matters to you). The one per-object knob worth
+  knowing: `OCIRepository spec.timeout` (default 60s) covers the whole
+  registry exchange, and a cold ocify cache resolving a chart from a very
+  large upstream index does its index fetch and tarball download within that
+  window — raise it per-repo if you ever see timeout-flavored `FetchFailed`.
 
 ## Dependency rewriting
 

@@ -31,6 +31,11 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
+            name: OCIFY_INDEX_STALE_TTL
+            value: 24h
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
             name: OCIFY_CACHE_MAX_BYTES
             value: "268435456"
     template: templates/deployment.tpl

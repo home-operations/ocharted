@@ -184,6 +184,91 @@ func TestHostAllowlist(t *testing.T) {
 	}
 }
 
+// flakyRepo serves index.yaml successfully until fail is set, then answers
+// with the given status code.
+func flakyRepo(t *testing.T, fail *atomic.Int64) (*Client, string) {
+	t.Helper()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/index.yaml", func(w http.ResponseWriter, _ *http.Request) {
+		if code := fail.Load(); code != 0 {
+			w.WriteHeader(int(code))
+			return
+		}
+		_, _ = w.Write([]byte("entries:\n  demo:\n    - version: 1.0.0\n      urls: [charts/demo-1.0.0.tgz]\n"))
+	})
+	srv := httptest.NewTLSServer(mux)
+	t.Cleanup(srv.Close)
+
+	opts := testOptions()
+	opts.IndexTTL = 0 // every call re-fetches, so failure paths trigger immediately
+	opts.IndexStaleTTL = time.Hour
+	opts.Transport = srv.Client().Transport
+	return New(opts), strings.TrimPrefix(srv.URL, "https://")
+}
+
+func TestStaleIndexServedOnUpstreamError(t *testing.T) {
+	var fail atomic.Int64
+	c, repo := flakyRepo(t, &fail)
+
+	if _, err := c.Index(t.Context(), repo); err != nil {
+		t.Fatalf("initial Index: %v", err)
+	}
+
+	fail.Store(http.StatusInternalServerError)
+	idx, err := c.Index(t.Context(), repo)
+	if err != nil {
+		t.Fatalf("expected stale index during upstream 500, got %v", err)
+	}
+	if len(idx.Versions("demo")) != 1 {
+		t.Fatalf("stale index content wrong: %+v", idx.Entries)
+	}
+}
+
+func TestStaleIndexNeverMasksAuthoritativeErrors(t *testing.T) {
+	var fail atomic.Int64
+	c, repo := flakyRepo(t, &fail)
+
+	if _, err := c.Index(t.Context(), repo); err != nil {
+		t.Fatalf("initial Index: %v", err)
+	}
+
+	// A 404 is an authoritative "this repo is gone" — stale must not hide it.
+	fail.Store(http.StatusNotFound)
+	if _, err := c.Index(t.Context(), repo); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("expected ErrNotFound despite stale entry, got %v", err)
+	}
+}
+
+func TestStaleIndexDisabledAndExpired(t *testing.T) {
+	var fail atomic.Int64
+	c, repo := flakyRepo(t, &fail)
+
+	if _, err := c.Index(t.Context(), repo); err != nil {
+		t.Fatalf("initial Index: %v", err)
+	}
+	fail.Store(http.StatusInternalServerError)
+
+	// An entry older than the stale window is not served.
+	c.mu.Lock()
+	entry := c.cache[repo]
+	entry.fetched = time.Now().Add(-2 * time.Hour)
+	c.cache[repo] = entry
+	c.mu.Unlock()
+	if _, err := c.Index(t.Context(), repo); err == nil {
+		t.Fatal("expected error for entry beyond IndexStaleTTL")
+	}
+
+	// StaleTTL=0 disables the behavior entirely.
+	c.mu.Lock()
+	entry.fetched = time.Now()
+	c.cache[repo] = entry
+	c.mu.Unlock()
+	c.opts.IndexStaleTTL = 0
+	if _, err := c.Index(t.Context(), repo); err == nil {
+		t.Fatal("expected error with stale-if-error disabled")
+	}
+}
+
 func TestPrivateAddressGuard(t *testing.T) {
 	// A guarded client (no transport override, AllowPrivate=false) must refuse
 	// to dial the loopback test server at connect time.

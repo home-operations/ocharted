@@ -39,6 +39,13 @@ type Config struct {
 	// knob (how often upstreams are hit) in one.
 	IndexTTL time.Duration `env:"OCIFY_INDEX_TTL" envDefault:"5m"`
 
+	// IndexStaleTTL bounds stale-if-error: when re-fetching an expired index
+	// fails with a non-authoritative error (network fault, 5xx), the cached
+	// copy is served instead, up to this age — so an upstream outage delays
+	// version freshness instead of failing Flux reconciles. Authoritative
+	// answers (404, allowlist rejection) are never masked. 0 disables.
+	IndexStaleTTL time.Duration `env:"OCIFY_INDEX_STALE_TTL" envDefault:"24h"`
+
 	// CacheMaxBytes bounds the in-memory derived-artifact cache. The cache is
 	// purely a latency/upstream-traffic optimization — every entry can be
 	// re-derived from upstream, so restarts and evictions never affect
@@ -200,6 +207,9 @@ func (c *Config) validate() error {
 		if v <= 0 {
 			return fmt.Errorf("config: %s must be > 0, got %s", name, v)
 		}
+	}
+	if c.IndexStaleTTL < 0 {
+		return fmt.Errorf("config: OCIFY_INDEX_STALE_TTL must be >= 0 (0 disables), got %s", c.IndexStaleTTL)
 	}
 	for name, v := range map[string]int64{
 		"OCIFY_CACHE_MAX_BYTES": c.CacheMaxBytes,
