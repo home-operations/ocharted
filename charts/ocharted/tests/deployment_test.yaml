@@ -79,6 +79,18 @@ tests:
       - exists:
           path: spec.template.metadata.annotations["checksum/secret"]
     template: templates/deployment.tpl
+  - it: joins auth bypass networks into one env value
+    set:
+      auth:
+        users: "flux:hunter2"
+        bypassNetworks: ["10.42.0.0/16", "192.168.0.0/16"]
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OCHARTED_AUTH_BYPASS_NETWORKS
+            value: "10.42.0.0/16,192.168.0.0/16"
+    template: templates/deployment.tpl
   - it: sources OCHARTED_AUTH from an existing Secret when given
     set:
       auth:

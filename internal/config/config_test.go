@@ -41,6 +41,19 @@ func TestLoadAuthAndAllowlist(t *testing.T) {
 	}
 }
 
+func TestLoadAuthBypassNetworks(t *testing.T) {
+	t.Setenv("OCHARTED_AUTH", "flux:hunter2")
+	t.Setenv("OCHARTED_AUTH_BYPASS_NETWORKS", "10.42.0.0/16, 192.168.0.0/16")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if len(cfg.AuthBypassNets) != 2 || cfg.AuthBypassNets[0].String() != "10.42.0.0/16" {
+		t.Fatalf("unexpected bypass networks: %v", cfg.AuthBypassNets)
+	}
+}
+
 func TestLoadRejectsInvalid(t *testing.T) {
 	cases := map[string]map[string]string{
 		"bad auth entry":  {"OCHARTED_AUTH": "nopassword"},
@@ -60,6 +73,13 @@ func TestLoadRejectsInvalid(t *testing.T) {
 		},
 		"external host with scheme": {
 			"OCHARTED_EXTERNAL_HOST": "https://ocharted.example.com",
+		},
+		"bad bypass network": {
+			"OCHARTED_AUTH":                 "flux:hunter2",
+			"OCHARTED_AUTH_BYPASS_NETWORKS": "10.42.0.0/16,not-a-cidr",
+		},
+		"bypass without auth": {
+			"OCHARTED_AUTH_BYPASS_NETWORKS": "10.42.0.0/16",
 		},
 	}
 	for name, envs := range cases {

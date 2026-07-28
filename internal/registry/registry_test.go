@@ -15,6 +15,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
 	"strings"
 	"testing"
 	"time"
@@ -130,6 +131,64 @@ func (f *fixture) newProxy(t *testing.T) *httptest.Server {
 	proxy := httptest.NewServer(s.handler())
 	t.Cleanup(proxy.Close)
 	return proxy
+}
+
+// TestAuthBypassNetworks exercises the trusted-network bypass with crafted
+// peers and X-Forwarded-For chains — a request is anonymous iff every hop
+// lies within the bypass networks; anything else (or with valid credentials)
+// follows the normal auth path.
+func TestAuthBypassNetworks(t *testing.T) {
+	f := newFixture(t, func(cfg *config.Config) {
+		cfg.Users = map[string]string{"flux": "hunter2"}
+		cfg.AuthBypassNets = []netip.Prefix{
+			netip.MustParsePrefix("10.42.0.0/16"),
+			netip.MustParsePrefix("192.168.0.0/16"),
+		}
+	})
+	up := upstream.New(upstream.Options{
+		Timeout: 5 * time.Second, IndexTTL: f.cfg.IndexTTL,
+		MaxIndexBytes: f.cfg.MaxIndexBytes, MaxChartBytes: f.cfg.MaxChartBytes,
+		AllowPrivate: true, UserAgent: "ocharted-test",
+		Transport: f.upSrv.Client().Transport,
+	})
+	res := NewResolver(up, ResolverOptions{ScanLimit: f.cfg.ResolveScanLimit, CacheBytes: f.cfg.CacheMaxBytes})
+	handler := New(f.cfg, res, slog.New(slog.NewTextHandler(io.Discard, nil))).Handler()
+
+	cases := []struct {
+		name  string
+		peer  string
+		xff   []string
+		creds bool
+		want  int
+	}{
+		{"in-cluster peer, no XFF", "10.42.0.5:41000", nil, false, http.StatusOK},
+		{"gateway peer, internal client in XFF", "10.42.0.5:41000", []string{"192.168.1.20"}, false, http.StatusOK},
+		{"gateway peer, external client in XFF", "10.42.0.5:41000", []string{"203.0.113.9, 10.42.0.1"}, false, http.StatusUnauthorized},
+		{"external peer, forged internal XFF", "203.0.113.9:52000", []string{"10.42.0.1"}, false, http.StatusUnauthorized},
+		{"gateway peer, malformed XFF fails closed", "10.42.0.5:41000", []string{"not-an-ip"}, false, http.StatusUnauthorized},
+		{"external hop hidden in second XFF header", "10.42.0.5:41000", []string{"10.42.0.7", "203.0.113.9"}, false, http.StatusUnauthorized},
+		{"external peer with credentials", "203.0.113.9:52000", nil, true, http.StatusOK},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/v2/", nil)
+			req.RemoteAddr = tc.peer
+			for _, v := range tc.xff {
+				req.Header.Add("X-Forwarded-For", v)
+			}
+			if tc.creds {
+				req.SetBasicAuth("flux", "hunter2")
+			}
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, req)
+			if rec.Code != tc.want {
+				t.Fatalf("status = %d, want %d", rec.Code, tc.want)
+			}
+			if tc.want == http.StatusUnauthorized && rec.Header().Get("WWW-Authenticate") == "" {
+				t.Fatal("401 must carry the Basic challenge")
+			}
+		})
+	}
 }
 
 func (f *fixture) get(t *testing.T, path string) *http.Response {

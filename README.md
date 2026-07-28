@@ -141,6 +141,7 @@ Everything is environment variables; there is no config file.
 | `OCHARTED_METRICS_ENABLED`         | `true`      | Serve Prometheus metrics on the metrics port                                                       |
 | `OCHARTED_METRICS_PORT`            | `8081`      | `/metrics` listener                                                                                |
 | `OCHARTED_AUTH`                    | _(empty)_   | `user:password` list (comma-separated); empty = anonymous                                          |
+| `OCHARTED_AUTH_BYPASS_NETWORKS`    | _(empty)_   | CIDRs whose traffic skips basic auth (see Exposure and hardening); requires `OCHARTED_AUTH`        |
 | `OCHARTED_INDEX_TTL`               | `5m`        | Upstream `index.yaml` cache TTL — the freshness/politeness knob                                    |
 | `OCHARTED_INDEX_STALE_TTL`         | `24h`       | Stale-if-error bound: serve the cached index this long when upstream is down; `0` disables         |
 | `OCHARTED_CACHE_MAX_BYTES`         | `268435456` | In-memory derived-artifact cache bound                                                             |
@@ -167,6 +168,20 @@ the zero-config Renovate story work. Regardless of auth, set
 `OCHARTED_UPSTREAM_ALLOWLIST` when the proxy should not fetch arbitrary
 attacker-named hosts: the allowlist (plus the always-on private-address dial
 guard) is an SSRF boundary, not just an abuse guard.
+
+With auth enabled, `OCHARTED_AUTH_BYPASS_NETWORKS` lets cluster-local clients
+skip it while external clients still authenticate — so the `OCIRepository` URL
+in git stays the public hostname (which hosted Renovate resolves with its
+`hostRule` credentials) while in-cluster Flux, hairpinning through the same
+gateway, needs no `secretRef`. The rule: a request is anonymous **iff its
+entire connection chain — the TCP peer plus every `X-Forwarded-For` hop —
+lies within the listed networks** (e.g. pod + service + LAN CIDRs). Any hop
+outside means an external party was in the path, so auth applies; a forged
+`X-Forwarded-For` doesn't help an attacker, because the gateway appends their
+real address to the chain. The one requirement: every hop you route external
+traffic through (gateway, tunnel) must append to `X-Forwarded-For` truthfully
+— Envoy and Cloudflare both do. Bypassed requests are counted in
+`ocharted_auth_bypassed_total`.
 
 Responses carry caching headers: by-digest manifests and blobs are
 `immutable`, by-tag and listing responses expire with `OCHARTED_INDEX_TTL`. A

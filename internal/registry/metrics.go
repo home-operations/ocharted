@@ -34,6 +34,13 @@ var (
 		Help: "Derived-artifact cache activity, by event (hit/miss/evict).",
 	}, []string{"event"})
 
+	// authBypassed counts requests admitted anonymously because their whole
+	// connection chain fell within OCHARTED_AUTH_BYPASS_NETWORKS.
+	authBypassed = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "ocharted_auth_bypassed_total",
+		Help: "Requests that skipped basic auth via the trusted-network bypass.",
+	})
+
 	buildInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "ocharted_build_info",
 		Help: "Build metadata; the value is always 1, the version/commit/goversion are labels.",

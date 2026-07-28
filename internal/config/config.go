@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/netip"
 	"os"
 	"strings"
 	"time"
@@ -33,6 +34,18 @@ type Config struct {
 	// registry is anonymous, intended for cluster-internal or public read-only
 	// deployments.
 	Auth string `env:"OCHARTED_AUTH"`
+
+	// AuthBypassNetworks lists CIDRs (comma-separated) whose traffic skips
+	// basic auth: a request is anonymous iff its entire connection chain — the
+	// TCP peer plus every X-Forwarded-For hop — lies within these networks.
+	// Any hop outside means an external party was in the path (as client, or
+	// as the forger of an XFF header a trusted gateway then appended the real
+	// address to), so auth applies. Typical value: pod + service + LAN CIDRs,
+	// letting in-cluster Flux/Renovate pull anonymously through the same
+	// public hostname external clients must authenticate to. Requires every
+	// listed hop (gateway, tunnel) to append to X-Forwarded-For truthfully,
+	// which Envoy and Cloudflare do.
+	AuthBypassNetworks []string `env:"OCHARTED_AUTH_BYPASS_NETWORKS" envSeparator:","`
 
 	// IndexTTL is how long an upstream index.yaml is cached. It is the
 	// freshness knob (how fast new chart versions appear) and the politeness
@@ -118,6 +131,8 @@ type Config struct {
 	// Users is parsed from Auth in Load (username → password). Nil means auth
 	// is disabled.
 	Users map[string]string `env:"-"`
+	// AuthBypassNets is parsed from AuthBypassNetworks in Load.
+	AuthBypassNets []netip.Prefix `env:"-"`
 }
 
 // Load reads the configuration from the environment, applies defaults,
@@ -141,6 +156,14 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 	cfg.Users = users
+
+	for _, raw := range trimList(cfg.AuthBypassNetworks) {
+		prefix, err := netip.ParsePrefix(raw)
+		if err != nil {
+			return nil, fmt.Errorf("config: invalid OCHARTED_AUTH_BYPASS_NETWORKS entry %q: %w", raw, err)
+		}
+		cfg.AuthBypassNets = append(cfg.AuthBypassNets, prefix)
+	}
 
 	cfg.UpstreamAllowlist = trimList(cfg.UpstreamAllowlist)
 
@@ -233,6 +256,9 @@ func (c *Config) validate() error {
 	}
 	if c.ExternalHost != "" && (strings.Contains(c.ExternalHost, "://") || strings.Contains(c.ExternalHost, "/")) {
 		return fmt.Errorf("config: OCHARTED_EXTERNAL_HOST must be a bare host, got %q", c.ExternalHost)
+	}
+	if len(c.AuthBypassNets) > 0 && len(c.Users) == 0 {
+		return errors.New("config: OCHARTED_AUTH_BYPASS_NETWORKS requires OCHARTED_AUTH (bypassing disabled auth is a configuration mistake)")
 	}
 	return nil
 }
