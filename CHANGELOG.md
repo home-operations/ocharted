@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.1.4](https://github.com/home-operations/ocharted/compare/0.1.3...0.1.4) (2026-08-08)
+
+
+### Bug Fixes
+
+* **ci:** fail the merge gate on cancelled jobs, and key the lint cache on the toolchain ([#16](https://github.com/home-operations/ocharted/issues/16)) ([db74760](https://github.com/home-operations/ocharted/commit/db74760cfebd2e9c9ce7919e631a088f0b30462d))
+
+
+### Documentation
+
+* add AGENTS.md with Go conventions ([#19](https://github.com/home-operations/ocharted/issues/19)) ([1646042](https://github.com/home-operations/ocharted/commit/1646042435f4896ff20d8a5aa19390ab44ebbecb))
+* warn against secret usernames that collide with package paths ([#14](https://github.com/home-operations/ocharted/issues/14)) ([18d3500](https://github.com/home-operations/ocharted/commit/18d350085c01a4667f8b7503ea88bd557f9335ed))
+
+
+### Miscellaneous Chores
+
+* **mise:** prune lockfile to used platforms ([#22](https://github.com/home-operations/ocharted/issues/22)) ([6c1595c](https://github.com/home-operations/ocharted/commit/6c1595c70f7efe196371c1de60b08620d8b0899b))
+* **mise:** Update tool oxfmt (0.61.0 → 0.62.0) ([#25](https://github.com/home-operations/ocharted/issues/25)) ([f342722](https://github.com/home-operations/ocharted/commit/f34272283a8bc18674d39412309eb827fe33e4e5))
+* **mise:** Update tool zizmor (1.28.0 → 1.29.0) ([#21](https://github.com/home-operations/ocharted/issues/21)) ([b5025c8](https://github.com/home-operations/ocharted/commit/b5025c85c2e7fab72d66c76f4e288f87c1e2bee6))
+* **release-please:** standardize the release pull request title pattern ([#18](https://github.com/home-operations/ocharted/issues/18)) ([3f4c685](https://github.com/home-operations/ocharted/commit/3f4c68532c82eaf91f48d2831d148c96bae8cf1a))
+* update pre-commit JSON format exclusions ([27aa8ef](https://github.com/home-operations/ocharted/commit/27aa8ef5b4d35f623063d0095625e9193880c8c4))
+
 ## [0.1.3](https://github.com/home-operations/ocharted/compare/0.1.2...0.1.3) (2026-07-28)
 
 
