@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.1.4](https://github.com/home-operations/ocharted/compare/0.1.3...0.1.4) (2026-08-21)
+
+
+### Bug Fixes
+
+* **ci:** fail the merge gate on cancelled jobs, and key the lint cache on the toolchain ([#16](https://github.com/home-operations/ocharted/issues/16)) ([db74760](https://github.com/home-operations/ocharted/commit/db74760cfebd2e9c9ce7919e631a088f0b30462d))
+* **go:** update to go 1.27.0 ([#37](https://github.com/home-operations/ocharted/issues/37)) ([2443c56](https://github.com/home-operations/ocharted/commit/2443c563da3a0c5c3b4fc2d893d1f933de11c55d))
+* **registry:** answer 404 for an upstream digest mismatch ([#38](https://github.com/home-operations/ocharted/issues/38)) ([c276164](https://github.com/home-operations/ocharted/commit/c276164fa02487577521f4b312e83269fa44f0be))
+
+
+### Documentation
+
+* add AGENTS.md with Go conventions ([#19](https://github.com/home-operations/ocharted/issues/19)) ([1646042](https://github.com/home-operations/ocharted/commit/1646042435f4896ff20d8a5aa19390ab44ebbecb))
+* warn against secret usernames that collide with package paths ([#14](https://github.com/home-operations/ocharted/issues/14)) ([18d3500](https://github.com/home-operations/ocharted/commit/18d350085c01a4667f8b7503ea88bd557f9335ed))
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action jdx/mise-action (v4.2.4 → v4.2.5) ([#31](https://github.com/home-operations/ocharted/issues/31)) ([ea60fdf](https://github.com/home-operations/ocharted/commit/ea60fdfb5783fc7ca3b11b0cd697150233d579dc))
+* **go:** pin go directive to 1.26.0 ([#32](https://github.com/home-operations/ocharted/issues/32)) ([b94ccc8](https://github.com/home-operations/ocharted/commit/b94ccc8af4a10a62a402fea1d80d50b1ca4cfa1f))
+* **mise:** prune lockfile to used platforms ([#22](https://github.com/home-operations/ocharted/issues/22)) ([6c1595c](https://github.com/home-operations/ocharted/commit/6c1595c70f7efe196371c1de60b08620d8b0899b))
+* **mise:** Update tool cosign (3.1.2 → 3.1.3) ([#27](https://github.com/home-operations/ocharted/issues/27)) ([ab6b9e5](https://github.com/home-operations/ocharted/commit/ab6b9e5b1679ae9230dbc2564313ad0736547c1c))
+* **mise:** update tool go (1.26.5 → 1.26.6) ([#35](https://github.com/home-operations/ocharted/issues/35)) ([eca9367](https://github.com/home-operations/ocharted/commit/eca9367e9a46093a519315e13c9a455c4e1273fa))
+* **mise:** update tool go:golang.org/x/vuln/cmd/govulncheck (1.6.0 → v1.7.0) ([#30](https://github.com/home-operations/ocharted/issues/30)) ([d75498d](https://github.com/home-operations/ocharted/commit/d75498d4da82b4436fefb9ebfd443018b85370ed))
+* **mise:** update tool helm (4.2.3 → 4.2.4) ([#34](https://github.com/home-operations/ocharted/issues/34)) ([f9a09a7](https://github.com/home-operations/ocharted/commit/f9a09a708007cb1afe975ecb4379ba85650603e3))
+* **mise:** Update tool oxfmt (0.61.0 → 0.62.0) ([#25](https://github.com/home-operations/ocharted/issues/25)) ([f342722](https://github.com/home-operations/ocharted/commit/f34272283a8bc18674d39412309eb827fe33e4e5))
+* **mise:** Update tool oxfmt (0.62.0 → 0.63.0) ([#28](https://github.com/home-operations/ocharted/issues/28)) ([6237458](https://github.com/home-operations/ocharted/commit/62374585f919dd46398196a47300578918135e49))
+* **mise:** Update tool zizmor (1.28.0 → 1.29.0) ([#21](https://github.com/home-operations/ocharted/issues/21)) ([b5025c8](https://github.com/home-operations/ocharted/commit/b5025c85c2e7fab72d66c76f4e288f87c1e2bee6))
+* **release-please:** standardize the release pull request title pattern ([#18](https://github.com/home-operations/ocharted/issues/18)) ([3f4c685](https://github.com/home-operations/ocharted/commit/3f4c68532c82eaf91f48d2831d148c96bae8cf1a))
+* update pre-commit JSON format exclusions ([27aa8ef](https://github.com/home-operations/ocharted/commit/27aa8ef5b4d35f623063d0095625e9193880c8c4))
+
 ## [0.1.3](https://github.com/home-operations/ocharted/compare/0.1.2...0.1.3) (2026-07-28)
 
 
