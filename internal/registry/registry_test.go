@@ -478,6 +478,100 @@ func TestErrorMapping(t *testing.T) {
 	}
 }
 
+// newCorruptFixture serves chart "demo" where only 1.0.0 is intact: 2.0.0's
+// tarball no longer hashes to the digest its index published (a mutated
+// upstream) and 3.0.0 is indexed but its tarball is gone. Index order is
+// newest-first, as Helm writes it, so scans hit the defective pair first.
+func newCorruptFixture(t *testing.T) *fixture {
+	t.Helper()
+	good := testchart.Tgz("demo", testchart.ChartYAML("demo", "1.0.0"), nil)
+	goodSum := sha256.Sum256(good)
+	mutated := testchart.Tgz("demo", testchart.ChartYAML("demo", "2.0.0"), nil)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/charts/demo-1.0.0.tgz", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write(good)
+	})
+	mux.HandleFunc("/charts/demo-2.0.0.tgz", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write(mutated)
+	})
+	mux.HandleFunc("/index.yaml", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = fmt.Fprintf(w, `entries:
+  demo:
+    - version: "3.0.0"
+      digest: %s
+      urls: ["charts/demo-3.0.0.tgz"]
+    - version: "2.0.0"
+      digest: %s
+      urls: ["charts/demo-2.0.0.tgz"]
+    - version: "1.0.0"
+      digest: %s
+      urls: ["charts/demo-1.0.0.tgz"]
+`, strings.Repeat("1", 64), strings.Repeat("0", 64), hex.EncodeToString(goodSum[:]))
+	})
+
+	upstreamSrv := httptest.NewTLSServer(mux)
+	t.Cleanup(upstreamSrv.Close)
+
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatalf("config.Load: %v", err)
+	}
+	f := &fixture{
+		upSrv: upstreamSrv,
+		cfg:   cfg,
+		repo:  strings.TrimPrefix(upstreamSrv.URL, "https://"),
+	}
+	f.srv = f.newProxy(t)
+	return f
+}
+
+// TestDigestMismatch covers issue #36: a version whose tarball contradicts
+// its index digest must answer 404 MANIFEST_UNKNOWN — a 5xx reads as the
+// whole registry being down and aborts entire client runs — and defective
+// versions must not poison cold by-digest lookups for intact ones.
+func TestDigestMismatch(t *testing.T) {
+	f := newCorruptFixture(t)
+
+	resp := f.get(t, "/v2/"+f.name()+"/manifests/2.0.0")
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("mismatched version status = %d, want 404", resp.StatusCode)
+	}
+	var body struct {
+		Errors []ociError `json:"errors"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil || len(body.Errors) == 0 {
+		t.Fatalf("bad error body: %v", err)
+	}
+	if body.Errors[0].Code != "MANIFEST_UNKNOWN" {
+		t.Fatalf("code = %s, want MANIFEST_UNKNOWN", body.Errors[0].Code)
+	}
+
+	// The intact version keeps serving by tag.
+	resp = f.get(t, "/v2/"+f.name()+"/manifests/1.0.0")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("intact version status = %d, want 200", resp.StatusCode)
+	}
+	manifest, _ := io.ReadAll(resp.Body)
+	digest := resp.Header.Get("Docker-Content-Digest")
+
+	// A cold replica resolving purely by digest scans newest-first through
+	// the missing 3.0.0 and mutated 2.0.0 before reaching 1.0.0.
+	cold := f.newProxy(t)
+	coldResp, err := http.Get(cold.URL + "/v2/" + f.name() + "/manifests/" + digest)
+	if err != nil {
+		t.Fatalf("cold GET: %v", err)
+	}
+	defer func() { _ = coldResp.Body.Close() }()
+	if coldResp.StatusCode != http.StatusOK {
+		t.Fatalf("cold manifest by digest = %d, want 200", coldResp.StatusCode)
+	}
+	coldManifest, _ := io.ReadAll(coldResp.Body)
+	if string(coldManifest) != string(manifest) {
+		t.Fatal("cold replica derived a different manifest for the same digest")
+	}
+}
+
 func TestReadOnly(t *testing.T) {
 	f := newFixture(t, nil)
 	resp, err := http.Post(f.srv.URL+"/v2/"+f.name()+"/blobs/uploads/", "application/octet-stream", nil)
