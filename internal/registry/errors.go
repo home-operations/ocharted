@@ -38,6 +38,11 @@ func (s *Server) writeResolveError(w http.ResponseWriter, r *http.Request, err e
 		writeOCIError(w, http.StatusNotFound, "MANIFEST_UNKNOWN", "manifest unknown")
 	case errors.Is(err, ErrBlobUnknown):
 		writeOCIError(w, http.StatusNotFound, "BLOB_UNKNOWN", "blob unknown to registry")
+	case errors.Is(err, upstream.ErrDigestMismatch):
+		// Fail closed but scoped: a 5xx reads as "registry down" and makes
+		// clients (Renovate, Flux) abort whole runs; 404 skips one version.
+		s.log.Error("upstream digest mismatch", "path", r.URL.Path, "error", err)
+		writeOCIError(w, http.StatusNotFound, "MANIFEST_UNKNOWN", "manifest unknown")
 	case errors.Is(err, upstream.ErrHostNotAllowed):
 		writeOCIError(w, http.StatusForbidden, "DENIED", "upstream host not permitted by this proxy")
 	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):

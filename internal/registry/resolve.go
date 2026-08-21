@@ -252,7 +252,12 @@ func (r *Resolver) scan(ctx context.Context, repo, chart string, match func(*oci
 	}
 	for _, entry := range entries[:min(len(entries), r.opts.ScanLimit)] {
 		art, err := r.ByVersion(ctx, repo, chart, entry.Version)
-		if err != nil {
+		switch {
+		case errors.Is(err, upstream.ErrDigestMismatch), errors.Is(err, upstream.ErrNotFound):
+			// An underivable candidate cannot be the match; aborting would let
+			// one defective upstream version poison lookups for healthy ones.
+			continue
+		case err != nil:
 			return nil, err
 		}
 		if match(art) {
