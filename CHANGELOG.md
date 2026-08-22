@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.5](https://github.com/home-operations/ocharted/compare/0.1.4...0.1.5) (2026-08-22)
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action docker/setup-buildx-action (v4.2.0 → v4.3.0) ([#41](https://github.com/home-operations/ocharted/issues/41)) ([f61414a](https://github.com/home-operations/ocharted/commit/f61414a20b5e253206ee62beb24cf37d18f26c26))
+* **mise:** update tool oxfmt (0.63.0 → 0.64.0) ([#39](https://github.com/home-operations/ocharted/issues/39)) ([db363fa](https://github.com/home-operations/ocharted/commit/db363fac9baa97e46fb3498f8ee565e1b549e62a))
+* **mise:** update tool yq (4.53.3 → 4.53.4) ([#40](https://github.com/home-operations/ocharted/issues/40)) ([abe4a58](https://github.com/home-operations/ocharted/commit/abe4a586eff2688ebb636779953010f67b1be936))
+
 ## [0.1.4](https://github.com/home-operations/ocharted/compare/0.1.3...0.1.4) (2026-08-21)
 
 
