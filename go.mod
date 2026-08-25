@@ -3,7 +3,7 @@ module github.com/home-operations/ocharted
 go 1.27.0
 
 require (
-	github.com/KimMachineGun/automemlimit v0.7.5
+	github.com/KimMachineGun/automemlimit v1.0.0
 	github.com/caarlos0/env/v11 v11.4.1
 	github.com/prometheus/client_golang v1.24.1
 	github.com/spf13/cobra v1.10.2
