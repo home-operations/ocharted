@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.1.5](https://github.com/home-operations/ocharted/compare/0.1.4...0.1.5) (2026-08-27)
+
+
+### Features
+
+* **go:** update module github.com/kimmachinegun/automemlimit (v0.7.5 → v1.0.0) ([#45](https://github.com/home-operations/ocharted/issues/45)) ([c0a61a5](https://github.com/home-operations/ocharted/commit/c0a61a5722e4789278fa1afb2c09314a16bbc96e))
+
+
+### Bug Fixes
+
+* drop UPX compression, packed binaries segfault (upx/upx[#18902](https://github.com/home-operations/ocharted/issues/18902)) ([#46](https://github.com/home-operations/ocharted/issues/46)) ([9dd5fa3](https://github.com/home-operations/ocharted/commit/9dd5fa3832929df5eeafc11a52bd0e196d728f65))
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action docker/github-builder (v1.16.0 → v1.17.0) ([#44](https://github.com/home-operations/ocharted/issues/44)) ([361e155](https://github.com/home-operations/ocharted/commit/361e15502fca6a33ac5a5f26f7e61ead1d0f5166))
+* **github-action:** update action docker/setup-buildx-action (v4.2.0 → v4.3.0) ([#41](https://github.com/home-operations/ocharted/issues/41)) ([f61414a](https://github.com/home-operations/ocharted/commit/f61414a20b5e253206ee62beb24cf37d18f26c26))
+* **mise:** update mise tools ([#43](https://github.com/home-operations/ocharted/issues/43)) ([50d6560](https://github.com/home-operations/ocharted/commit/50d65606dbaa6797f00932d4f516210250754795))
+* **mise:** update tool oxfmt (0.63.0 → 0.64.0) ([#39](https://github.com/home-operations/ocharted/issues/39)) ([db363fa](https://github.com/home-operations/ocharted/commit/db363fac9baa97e46fb3498f8ee565e1b549e62a))
+* **mise:** update tool yq (4.53.3 → 4.53.4) ([#40](https://github.com/home-operations/ocharted/issues/40)) ([abe4a58](https://github.com/home-operations/ocharted/commit/abe4a586eff2688ebb636779953010f67b1be936))
+
 ## [0.1.4](https://github.com/home-operations/ocharted/compare/0.1.3...0.1.4) (2026-08-21)
 
 
