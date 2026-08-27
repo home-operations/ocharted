@@ -9,9 +9,6 @@ ARG TARGETARCH
 ARG VERSION=dev
 ARG REVISION=dev
 
-# upx (build stage only) compresses the final binary to shrink the image.
-RUN apk add --no-cache upx
-
 WORKDIR /workspace
 COPY go.mod go.sum ./
 RUN go mod download
@@ -23,8 +20,6 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} \
     go build -trimpath \
     -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${REVISION}" \
     -o ocharted ./cmd/ocharted
-
-RUN upx --best --lzma ocharted
 
 # ---- Runtime --------------------------------------------------------------
 # distroless/static:nonroot — the fleet-standard runtime base for our static
