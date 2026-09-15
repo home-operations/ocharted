@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.1.6](https://github.com/home-operations/ocharted/compare/0.1.5...0.1.6) (2026-09-15)
+
+
+### Features
+
+* **container:** update image mirror.gcr.io/curlimages/curl (8.21.0 → 8.22.0) ([#53](https://github.com/home-operations/ocharted/issues/53)) ([42d58b5](https://github.com/home-operations/ocharted/commit/42d58b539f873fc289dc53a2b5b337a3e690a028))
+* **go:** update module golang.org/x/sync (v0.22.0 → v0.23.0) ([#58](https://github.com/home-operations/ocharted/issues/58)) ([3a5c2b2](https://github.com/home-operations/ocharted/commit/3a5c2b2f87da232c23f9998293dc551891161825))
+
+
+### Documentation
+
+* **agents:** derive Go version from go.mod ([3b6feb5](https://github.com/home-operations/ocharted/commit/3b6feb56c92d2a89f0c39d2c6d9fbc8746420d12))
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action helm/kind-action (v1.14.0 → v1.15.0) ([#57](https://github.com/home-operations/ocharted/issues/57)) ([fb810b3](https://github.com/home-operations/ocharted/commit/fb810b31fb50859a97a4ffa0243222a8332c2056))
+* **github-action:** update action jdx/mise-action (v4.2.5 → v4.3.0) ([#50](https://github.com/home-operations/ocharted/issues/50)) ([61eb219](https://github.com/home-operations/ocharted/commit/61eb219764cea4f69f46c6de879b3987da7003ab))
+* **github-action:** update action kindest/node (v1.34.0 → v1.37.0) ([#63](https://github.com/home-operations/ocharted/issues/63)) ([7c2191c](https://github.com/home-operations/ocharted/commit/7c2191c352ba433b79cee41980df99ad94178ffb))
+* **github-release:** update release kubernetes-sigs/kind (v0.30.0 → v0.33.0) ([#64](https://github.com/home-operations/ocharted/issues/64)) ([aab0757](https://github.com/home-operations/ocharted/commit/aab0757524655bbe183164143b91a39fc1fa55c9))
+* **mise:** update tool aqua:dadav/helm-schema (0.23.4 → 0.23.5) ([#48](https://github.com/home-operations/ocharted/issues/48)) ([f161a73](https://github.com/home-operations/ocharted/commit/f161a73c787aff528f3c5b82f80df71a1a4949a5))
+* **mise:** update tool go (1.27.0 → 1.27.1) ([#56](https://github.com/home-operations/ocharted/issues/56)) ([8dda6a2](https://github.com/home-operations/ocharted/commit/8dda6a276e1b42a75e03f2ad13064cfe68e24656))
+* **mise:** update tool go:golang.org/x/vuln/cmd/govulncheck (1.7.0 → v1.8.0) ([#59](https://github.com/home-operations/ocharted/issues/59)) ([4458bdf](https://github.com/home-operations/ocharted/commit/4458bdf5dda8e793e44c4e16869fcf7b30811d0f))
+* **mise:** update tool golangci-lint (2.13.1 → 2.13.2) ([#51](https://github.com/home-operations/ocharted/issues/51)) ([feedfdc](https://github.com/home-operations/ocharted/commit/feedfdca5bd96f57fb907c1be1f2c834d8111b05))
+* **mise:** update tool helm (4.2.4 → 4.3.0) ([#62](https://github.com/home-operations/ocharted/issues/62)) ([73e25aa](https://github.com/home-operations/ocharted/commit/73e25aa00d301dcc902f18fcf0e8d4fe862f1649))
+* **mise:** update tool lefthook (2.1.11 → 2.1.12) ([#52](https://github.com/home-operations/ocharted/issues/52)) ([c560264](https://github.com/home-operations/ocharted/commit/c560264903fa0e87c03fb1569a17a65397e23b0d))
+* **mise:** update tool oxfmt (0.64.0 → 0.65.0) ([#49](https://github.com/home-operations/ocharted/issues/49)) ([911d40a](https://github.com/home-operations/ocharted/commit/911d40a1d6648aa9f6a204b12077e5d2a916802a))
+* **mise:** update tool oxfmt (0.65.0 → 0.66.0) ([#55](https://github.com/home-operations/ocharted/issues/55)) ([0851a92](https://github.com/home-operations/ocharted/commit/0851a92d33afda903c35f8191139b932a4e315b9))
+* **mise:** update tool oxfmt (0.66.0 → 0.67.0) ([#60](https://github.com/home-operations/ocharted/issues/60)) ([5226059](https://github.com/home-operations/ocharted/commit/5226059080b2c9408cc6d766a8c707e197521240))
+* **mise:** update tool zizmor (1.29.0 → 1.30.0) ([#54](https://github.com/home-operations/ocharted/issues/54)) ([b5c38ed](https://github.com/home-operations/ocharted/commit/b5c38edb7f13e36d4ffe274831e5942cefbe4ca2))
+* **mise:** update tool zizmor (1.30.0 → 1.30.1) ([#61](https://github.com/home-operations/ocharted/issues/61)) ([a1b2912](https://github.com/home-operations/ocharted/commit/a1b2912b50051df7de835b71cdef068cf552d1a2))
+
 ## [0.1.5](https://github.com/home-operations/ocharted/compare/0.1.4...0.1.5) (2026-08-27)
 
 
