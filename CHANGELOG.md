@@ -1,5 +1,60 @@
 # Changelog
 
+## [0.1.6](https://github.com/home-operations/ocharted/compare/0.1.5...0.1.6) (2026-10-10)
+
+
+### Features
+
+* **container:** update image mirror.gcr.io/curlimages/curl (8.21.0 → 8.22.0) ([#53](https://github.com/home-operations/ocharted/issues/53)) ([42d58b5](https://github.com/home-operations/ocharted/commit/42d58b539f873fc289dc53a2b5b337a3e690a028))
+* **go:** update module golang.org/x/sync (v0.22.0 → v0.23.0) ([#58](https://github.com/home-operations/ocharted/issues/58)) ([3a5c2b2](https://github.com/home-operations/ocharted/commit/3a5c2b2f87da232c23f9998293dc551891161825))
+
+
+### Documentation
+
+* **agents:** derive Go version from go.mod ([3b6feb5](https://github.com/home-operations/ocharted/commit/3b6feb56c92d2a89f0c39d2c6d9fbc8746420d12))
+* **agents:** point to the org AI Usage Policy instead of restating it ([fee9315](https://github.com/home-operations/ocharted/commit/fee9315c75907189776fc00750ceeeb6bdb01cba))
+* **agents:** update AI usage policy summary ([649e729](https://github.com/home-operations/ocharted/commit/649e729cfffb02431eb6c99d9e9c92b4fc6cd561))
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action docker/setup-buildx-action (v4.4.0 → v4.4.1) ([#69](https://github.com/home-operations/ocharted/issues/69)) ([38cb9dc](https://github.com/home-operations/ocharted/commit/38cb9dc25198787002e6937b962f187931241bbd))
+* **github-action:** update action helm/kind-action (v1.14.0 → v1.15.0) ([#57](https://github.com/home-operations/ocharted/issues/57)) ([fb810b3](https://github.com/home-operations/ocharted/commit/fb810b31fb50859a97a4ffa0243222a8332c2056))
+* **github-action:** update action jdx/mise-action (v4.2.5 → v4.3.0) ([#50](https://github.com/home-operations/ocharted/issues/50)) ([61eb219](https://github.com/home-operations/ocharted/commit/61eb219764cea4f69f46c6de879b3987da7003ab))
+* **github-action:** update action jdx/mise-action (v4.3.0 → v5.0.0) ([#75](https://github.com/home-operations/ocharted/issues/75)) ([2a60d6f](https://github.com/home-operations/ocharted/commit/2a60d6f300c6b30a8a2ac9cf6635b0e8783d06ad))
+* **github-action:** update action jdx/mise-action (v5.0.0 → v5.0.1) ([#79](https://github.com/home-operations/ocharted/issues/79)) ([1da0442](https://github.com/home-operations/ocharted/commit/1da04429a03f2a08f83b79712bb288e2cfc8bc0a))
+* **github-action:** update action jdx/mise-action (v5.0.1 → v5.1.1) ([#82](https://github.com/home-operations/ocharted/issues/82)) ([1d38487](https://github.com/home-operations/ocharted/commit/1d38487a5fd34e9b549bd4c1261020a5acf4fc64))
+* **github-action:** update action kindest/node (v1.34.0 → v1.37.0) ([#63](https://github.com/home-operations/ocharted/issues/63)) ([7c2191c](https://github.com/home-operations/ocharted/commit/7c2191c352ba433b79cee41980df99ad94178ffb))
+* **github-action:** update action ubuntu (24.04 → 26.04) ([#68](https://github.com/home-operations/ocharted/issues/68)) ([22b040a](https://github.com/home-operations/ocharted/commit/22b040aa40abb8e17d8a0aa699ce193580b20105))
+* **github-action:** update github-actions ([#67](https://github.com/home-operations/ocharted/issues/67)) ([f5364bc](https://github.com/home-operations/ocharted/commit/f5364bc9a5811671629063c94a12273e13ee821e))
+* **github-release:** update release helm-unittest/helm-unittest (v1.1.2 → v1.2.0) ([#74](https://github.com/home-operations/ocharted/issues/74)) ([c4bf712](https://github.com/home-operations/ocharted/commit/c4bf712f840e01769e628583507b7229fdace12e))
+* **github-release:** update release helm-unittest/helm-unittest (v1.2.0 → v1.2.1) ([#78](https://github.com/home-operations/ocharted/issues/78)) ([2559771](https://github.com/home-operations/ocharted/commit/25597711a6dad51b9c1fa3b48a7aaeb65d654f22))
+* **github-release:** update release kubernetes-sigs/kind (v0.30.0 → v0.33.0) ([#64](https://github.com/home-operations/ocharted/issues/64)) ([aab0757](https://github.com/home-operations/ocharted/commit/aab0757524655bbe183164143b91a39fc1fa55c9))
+* **mise:** bump Go to 1.27.2 ([#88](https://github.com/home-operations/ocharted/issues/88)) ([9b6f6a4](https://github.com/home-operations/ocharted/commit/9b6f6a4c64ab9d5c9cfd0e12e0bf1f0ca749cabe))
+* **mise:** update tool aqua:dadav/helm-schema (0.23.4 → 0.23.5) ([#48](https://github.com/home-operations/ocharted/issues/48)) ([f161a73](https://github.com/home-operations/ocharted/commit/f161a73c787aff528f3c5b82f80df71a1a4949a5))
+* **mise:** update tool go (1.27.0 → 1.27.1) ([#56](https://github.com/home-operations/ocharted/issues/56)) ([8dda6a2](https://github.com/home-operations/ocharted/commit/8dda6a276e1b42a75e03f2ad13064cfe68e24656))
+* **mise:** update tool go:golang.org/x/vuln/cmd/govulncheck (1.7.0 → v1.8.0) ([#59](https://github.com/home-operations/ocharted/issues/59)) ([4458bdf](https://github.com/home-operations/ocharted/commit/4458bdf5dda8e793e44c4e16869fcf7b30811d0f))
+* **mise:** update tool golangci-lint (2.13.1 → 2.13.2) ([#51](https://github.com/home-operations/ocharted/issues/51)) ([feedfdc](https://github.com/home-operations/ocharted/commit/feedfdca5bd96f57fb907c1be1f2c834d8111b05))
+* **mise:** update tool golangci-lint (2.13.2 → 2.14.0) ([#72](https://github.com/home-operations/ocharted/issues/72)) ([dce52f6](https://github.com/home-operations/ocharted/commit/dce52f6445785b31f5c4933ff2ce1434c6883429))
+* **mise:** update tool helm (4.2.4 → 4.3.0) ([#62](https://github.com/home-operations/ocharted/issues/62)) ([73e25aa](https://github.com/home-operations/ocharted/commit/73e25aa00d301dcc902f18fcf0e8d4fe862f1649))
+* **mise:** update tool lefthook (2.1.11 → 2.1.12) ([#52](https://github.com/home-operations/ocharted/issues/52)) ([c560264](https://github.com/home-operations/ocharted/commit/c560264903fa0e87c03fb1569a17a65397e23b0d))
+* **mise:** update tool lefthook (2.1.12 → 2.1.14) ([#65](https://github.com/home-operations/ocharted/issues/65)) ([d2ed4e7](https://github.com/home-operations/ocharted/commit/d2ed4e7b6e66920c23e0c020da9d1a6fe37e85dc))
+* **mise:** update tool lefthook (2.1.14 → 2.1.15) ([#77](https://github.com/home-operations/ocharted/issues/77)) ([30ae178](https://github.com/home-operations/ocharted/commit/30ae178b7b952e419692c0aa19938ba0567433a8))
+* **mise:** update tool lefthook (2.1.15 → 2.1.16) ([#80](https://github.com/home-operations/ocharted/issues/80)) ([57eec89](https://github.com/home-operations/ocharted/commit/57eec890580c9adaca3d2685f583df770473044f))
+* **mise:** update tool lefthook (2.1.16 → 2.1.17) ([#81](https://github.com/home-operations/ocharted/issues/81)) ([50b9a76](https://github.com/home-operations/ocharted/commit/50b9a769815cf1830674d3cf370327f9eb4f1f0c))
+* **mise:** update tool oxfmt (0.64.0 → 0.65.0) ([#49](https://github.com/home-operations/ocharted/issues/49)) ([911d40a](https://github.com/home-operations/ocharted/commit/911d40a1d6648aa9f6a204b12077e5d2a916802a))
+* **mise:** update tool oxfmt (0.65.0 → 0.66.0) ([#55](https://github.com/home-operations/ocharted/issues/55)) ([0851a92](https://github.com/home-operations/ocharted/commit/0851a92d33afda903c35f8191139b932a4e315b9))
+* **mise:** update tool oxfmt (0.66.0 → 0.67.0) ([#60](https://github.com/home-operations/ocharted/issues/60)) ([5226059](https://github.com/home-operations/ocharted/commit/5226059080b2c9408cc6d766a8c707e197521240))
+* **mise:** update tool oxfmt (0.67.0 → 0.68.0) ([#66](https://github.com/home-operations/ocharted/issues/66)) ([9d1d373](https://github.com/home-operations/ocharted/commit/9d1d3733482473ad0a57b19f04d355ea4d18e29f))
+* **mise:** update tool oxfmt (0.68.0 → 0.69.0) ([#70](https://github.com/home-operations/ocharted/issues/70)) ([97f6559](https://github.com/home-operations/ocharted/commit/97f655982f2e768c493b28df3dad687d82065c44))
+* **mise:** update tool oxfmt (0.69.0 → 0.70.0) ([#71](https://github.com/home-operations/ocharted/issues/71)) ([3760229](https://github.com/home-operations/ocharted/commit/3760229d1eb8bbf8632e2aefc46763944e60cce6))
+* **mise:** update tool oxfmt (0.70.0 → 0.71.0) ([#73](https://github.com/home-operations/ocharted/issues/73)) ([418eebe](https://github.com/home-operations/ocharted/commit/418eebe31800761fa5f96cdd8775d9b12c54b830))
+* **mise:** update tool oxfmt (0.71.0 → 0.72.0) ([#83](https://github.com/home-operations/ocharted/issues/83)) ([a7b09e2](https://github.com/home-operations/ocharted/commit/a7b09e298735dd1ec21da05659167f2d81c4fceb))
+* **mise:** update tool yq (4.53.6 → 4.54.1) ([#76](https://github.com/home-operations/ocharted/issues/76)) ([d83f603](https://github.com/home-operations/ocharted/commit/d83f6032affc0b2e7b272c58fcde8742217b2a76))
+* **mise:** update tool zizmor (1.29.0 → 1.30.0) ([#54](https://github.com/home-operations/ocharted/issues/54)) ([b5c38ed](https://github.com/home-operations/ocharted/commit/b5c38edb7f13e36d4ffe274831e5942cefbe4ca2))
+* **mise:** update tool zizmor (1.30.0 → 1.30.1) ([#61](https://github.com/home-operations/ocharted/issues/61)) ([a1b2912](https://github.com/home-operations/ocharted/commit/a1b2912b50051df7de835b71cdef068cf552d1a2))
+* **mise:** upgrade lockfile to format revision 3 ([d0d1473](https://github.com/home-operations/ocharted/commit/d0d1473dd090c6c4ad3390b397013d27b9f43654))
+
 ## [0.1.5](https://github.com/home-operations/ocharted/compare/0.1.4...0.1.5) (2026-08-27)
 
 
