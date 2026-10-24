@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.8](https://github.com/home-operations/ocharted/compare/0.1.7...0.1.8) (2026-10-24)
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action docker/github-builder (v1.18.0 → v1.18.1) ([#110](https://github.com/home-operations/ocharted/issues/110)) ([13aa205](https://github.com/home-operations/ocharted/commit/13aa2050c17db44d479a63149382b3cc2fb68a95))
+* **github-action:** update action jdx/mise-action (v5.2.1 → v5.2.2) ([#109](https://github.com/home-operations/ocharted/issues/109)) ([53355bb](https://github.com/home-operations/ocharted/commit/53355bb106b5709c55559ccdcd3f3c1f797ab798))
+* **github-action:** update github-actions ([#106](https://github.com/home-operations/ocharted/issues/106)) ([7f89576](https://github.com/home-operations/ocharted/commit/7f89576dd89084d2078ac9b36e07fe702beb5d9d))
+* **mise:** update tool aqua:dadav/helm-schema (0.23.5 → 0.24.0) ([#104](https://github.com/home-operations/ocharted/issues/104)) ([352670d](https://github.com/home-operations/ocharted/commit/352670d5677e22fc4e32e19fdc92ff69a08a2430))
+* **mise:** update tool cosign (3.1.3 → 3.1.4) ([#108](https://github.com/home-operations/ocharted/issues/108)) ([ad74555](https://github.com/home-operations/ocharted/commit/ad74555653555befca4a5ea0d37eb789bd15925a))
+* **mise:** update tool oxfmt (0.73.0 → 0.74.0) ([#107](https://github.com/home-operations/ocharted/issues/107)) ([ac87760](https://github.com/home-operations/ocharted/commit/ac8776055bfdfef5b59202cb902116b30a042e13))
+
 ## [0.1.7](https://github.com/home-operations/ocharted/compare/0.1.6...0.1.7) (2026-10-21)
 
 
