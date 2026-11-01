@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.1.8](https://github.com/home-operations/ocharted/compare/0.1.7...0.1.8) (2026-11-01)
+
+
+### Bug Fixes
+
+* **container:** update image mirror.gcr.io/curlimages/curl (11e64e2 → 3fb7e13) ([#114](https://github.com/home-operations/ocharted/issues/114)) ([dafd818](https://github.com/home-operations/ocharted/commit/dafd8186a0dbb5d815859b7bb3c9962955d700c2))
+* **go:** update module github.com/kimmachinegun/automemlimit (v1.0.0 → v1.0.1) ([#111](https://github.com/home-operations/ocharted/issues/111)) ([d61c17e](https://github.com/home-operations/ocharted/commit/d61c17e0f31f8386f914af17eff5987ad59f5e2a))
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action docker/github-builder (v1.18.0 → v1.18.1) ([#110](https://github.com/home-operations/ocharted/issues/110)) ([13aa205](https://github.com/home-operations/ocharted/commit/13aa2050c17db44d479a63149382b3cc2fb68a95))
+* **github-action:** update action docker/login-action (v4.6.0 → v4.7.0) ([#112](https://github.com/home-operations/ocharted/issues/112)) ([4e0d835](https://github.com/home-operations/ocharted/commit/4e0d835a5e7ff21f630722987343f01e3ee00734))
+* **github-action:** update action jdx/mise-action (v5.2.1 → v5.2.2) ([#109](https://github.com/home-operations/ocharted/issues/109)) ([53355bb](https://github.com/home-operations/ocharted/commit/53355bb106b5709c55559ccdcd3f3c1f797ab798))
+* **github-action:** update action jdx/mise-action (v5.2.2 → v5.2.3) ([#113](https://github.com/home-operations/ocharted/issues/113)) ([005448f](https://github.com/home-operations/ocharted/commit/005448fc49fa390fb29aa0837c7f85a632b4c196))
+* **github-action:** update action jdx/mise-action (v5.2.3 → v5.2.4) ([#116](https://github.com/home-operations/ocharted/issues/116)) ([32a42bb](https://github.com/home-operations/ocharted/commit/32a42bbaaa6b11e0b5d31f100a0db94b7bc6118a))
+* **github-action:** update github-actions ([#106](https://github.com/home-operations/ocharted/issues/106)) ([7f89576](https://github.com/home-operations/ocharted/commit/7f89576dd89084d2078ac9b36e07fe702beb5d9d))
+* **go:** update module go.yaml.in/yaml/v4 (v4.0.0-rc.6 → v4.0.0-rc.7) ([#117](https://github.com/home-operations/ocharted/issues/117)) ([4ca6f4e](https://github.com/home-operations/ocharted/commit/4ca6f4e8594af0d5b610dcafb5a3fe95247c718c))
+* **mise:** update tool aqua:dadav/helm-schema (0.23.5 → 0.24.0) ([#104](https://github.com/home-operations/ocharted/issues/104)) ([352670d](https://github.com/home-operations/ocharted/commit/352670d5677e22fc4e32e19fdc92ff69a08a2430))
+* **mise:** update tool cosign (3.1.3 → 3.1.4) ([#108](https://github.com/home-operations/ocharted/issues/108)) ([ad74555](https://github.com/home-operations/ocharted/commit/ad74555653555befca4a5ea0d37eb789bd15925a))
+* **mise:** update tool oxfmt (0.73.0 → 0.74.0) ([#107](https://github.com/home-operations/ocharted/issues/107)) ([ac87760](https://github.com/home-operations/ocharted/commit/ac8776055bfdfef5b59202cb902116b30a042e13))
+* **mise:** update tool oxfmt (0.74.0 → 0.75.0) ([#115](https://github.com/home-operations/ocharted/issues/115)) ([0fbe0d4](https://github.com/home-operations/ocharted/commit/0fbe0d44988d1de09d8572a832ab296350b4e483))
+* **renovate:** extend the org preset from home-operations/.github ([13f5cc8](https://github.com/home-operations/ocharted/commit/13f5cc8237f32e993636d00985809ad7df510a27))
+
 ## [0.1.7](https://github.com/home-operations/ocharted/compare/0.1.6...0.1.7) (2026-10-21)
 
 
