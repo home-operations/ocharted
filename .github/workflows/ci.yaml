@@ -265,6 +265,23 @@ jobs:
           helm plugin install https://github.com/helm-unittest/helm-unittest --version "${HELM_UNITTEST_VERSION}" --verify=false
           mise run helm-unittest
 
+  zizmor:
+    name: Zizmor
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b # v0.8.0
+        with:
+          advanced-security: false
+          annotations: true
+
   status:
     if: ${{ !cancelled() }}
     name: Build Success
@@ -275,6 +292,7 @@ jobs:
       - helm-e2e
       - helm-lint
       - helm-unittest
+      - zizmor
     runs-on: ubuntu-26.04
     permissions: {}
     steps:
