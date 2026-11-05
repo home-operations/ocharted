@@ -7,7 +7,7 @@ require (
 	github.com/caarlos0/env/v11 v11.4.2
 	github.com/prometheus/client_golang v1.25.0
 	github.com/spf13/cobra v1.10.2
-	go.yaml.in/yaml/v4 v4.0.0-rc.9
+	go.yaml.in/yaml/v4 v4.0.0
 	golang.org/x/sync v0.24.0
 )
 
