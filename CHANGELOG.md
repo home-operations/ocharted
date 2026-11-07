@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.9](https://github.com/home-operations/ocharted/compare/0.1.8...0.1.9) (2026-11-07)
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action helm/kind-action (v1.15.1 → v1.15.2) ([#126](https://github.com/home-operations/ocharted/issues/126)) ([4cf6a62](https://github.com/home-operations/ocharted/commit/4cf6a62eeadb39519b5f434b77643151a7346742))
+* **github-action:** update github-actions ([#124](https://github.com/home-operations/ocharted/issues/124)) ([218a7bf](https://github.com/home-operations/ocharted/commit/218a7bf0e959c0debade7d1d256d3fb7c2dafad7))
+* **go:** update module go.yaml.in/yaml/v4 (v4.0.0-rc.9 → v4.0.0) ([#122](https://github.com/home-operations/ocharted/issues/122)) ([e504059](https://github.com/home-operations/ocharted/commit/e504059520a56ca71329d4082bbaf8811320dec3))
+* **mise:** update tool zizmor (1.31.1 → 1.32.0) ([#125](https://github.com/home-operations/ocharted/issues/125)) ([bffcc9e](https://github.com/home-operations/ocharted/commit/bffcc9e2363dfd3ce6603062eef67d02251872c7))
+
 ## [0.1.8](https://github.com/home-operations/ocharted/compare/0.1.7...0.1.8) (2026-11-03)
 
 
