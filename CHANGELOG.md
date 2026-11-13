@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.1.9](https://github.com/home-operations/ocharted/compare/0.1.8...0.1.9) (2026-11-13)
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action docker/github-builder (v1.18.1 → v1.19.0) ([#128](https://github.com/home-operations/ocharted/issues/128)) ([c01f3be](https://github.com/home-operations/ocharted/commit/c01f3be98774a7b3e47378db75e805f20b5c8b07))
+* **github-action:** update action docker/login-action (v4.7.0 → v4.8.0) ([#127](https://github.com/home-operations/ocharted/issues/127)) ([64d9426](https://github.com/home-operations/ocharted/commit/64d94266feaffbea4e8fd8ebedc47eb604ad01d1))
+* **github-action:** update action helm/kind-action (v1.15.1 → v1.15.2) ([#126](https://github.com/home-operations/ocharted/issues/126)) ([4cf6a62](https://github.com/home-operations/ocharted/commit/4cf6a62eeadb39519b5f434b77643151a7346742))
+* **github-action:** update action jdx/mise-action (v5.2.6 → v5.2.7) ([#130](https://github.com/home-operations/ocharted/issues/130)) ([cc1a764](https://github.com/home-operations/ocharted/commit/cc1a764c25719c3d908bd5e86c756f708369a08f))
+* **github-action:** update github-actions ([#124](https://github.com/home-operations/ocharted/issues/124)) ([218a7bf](https://github.com/home-operations/ocharted/commit/218a7bf0e959c0debade7d1d256d3fb7c2dafad7))
+* **go:** update module go.yaml.in/yaml/v4 (v4.0.0-rc.9 → v4.0.0) ([#122](https://github.com/home-operations/ocharted/issues/122)) ([e504059](https://github.com/home-operations/ocharted/commit/e504059520a56ca71329d4082bbaf8811320dec3))
+* **go:** update module golang.org/x/sync (v0.24.0 → v0.25.0) ([#131](https://github.com/home-operations/ocharted/issues/131)) ([e0e6959](https://github.com/home-operations/ocharted/commit/e0e69595278416acdfe3081b077cb70b111e26c7))
+* **mise:** update tool go (1.27.3 → 1.27.4) ([#133](https://github.com/home-operations/ocharted/issues/133)) ([d2d8468](https://github.com/home-operations/ocharted/commit/d2d846886913608c0ca933c79491de75475a5ef2))
+* **mise:** update tool yq (4.54.1 → 4.54.2) ([#129](https://github.com/home-operations/ocharted/issues/129)) ([df25b2a](https://github.com/home-operations/ocharted/commit/df25b2a6ac2fde90182bf1c8775296fbd982c562))
+* **mise:** update tool yq (4.54.2 → 4.54.3) ([#132](https://github.com/home-operations/ocharted/issues/132)) ([52adc5a](https://github.com/home-operations/ocharted/commit/52adc5a5fdb32dbe3003db56998f04c02ad17b92))
+* **mise:** update tool zizmor (1.31.1 → 1.32.0) ([#125](https://github.com/home-operations/ocharted/issues/125)) ([bffcc9e](https://github.com/home-operations/ocharted/commit/bffcc9e2363dfd3ce6603062eef67d02251872c7))
+
 ## [0.1.8](https://github.com/home-operations/ocharted/compare/0.1.7...0.1.8) (2026-11-03)
 
 
